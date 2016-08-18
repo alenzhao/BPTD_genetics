@@ -1,5 +1,4 @@
-## simulate from real genotype data and the model
-## simulation is for testing purpose (convergence)
+## this simulates a symmetric tensor, whose factors are all with uniform Gaussian's
 
 
 
@@ -10,13 +9,11 @@ import numpy as np
 
 
 ##==== global variables
-X = []
 Y = []
 Y1 = []
 U1 = []
 V1 = []
 T1 = []
-Beta = []
 Y2 = []
 U2 = []
 V2 = []
@@ -26,7 +23,6 @@ alpha = 1
 K = 13
 I = 159
 J = 585
-S = 14056				#S = 14056
 D1 = 40
 D2 = 40
 
@@ -47,32 +43,11 @@ def simu_fm_uniform(d_sample, d_feature, mu, lamb):		## (local function)
 
 
 
-## sample uni-Gaussian from given mean matrix (np.array) and variance
-def simu_fm_Mu(d_sample, d_feature, Mu, lamb):			## (local function)
-	sigma = math.sqrt(1.0 / lamb)
-
-	##== simu
-	fm = np.zeros((d_sample, d_feature))
-	for i in range(d_sample):
-		for j in range(d_feature):
-			mu = Mu[(i,j)]
-			fm[(i,j)] = np.random.normal(mu, sigma)
-	return fm
-
-
-
-
 def simu_Y1(lamb, mu1, lamb1):		# (work on global scale)
-	global Y1, U1, I, V1, J, T1, K, D1, Beta, S, X
+	global Y1, U1, I, V1, J, T1, K, D1
 
 	##== simu priors
-	Beta = simu_fm_uniform(D1, S, mu1, lamb1)
-	Mu = np.zeros((I, D1))
-	for i in range(I):
-		for d in range(D1):
-			mean = np.inner(X[i], Beta[d])
-			Mu[(i,d)] = mean
-	U1 = simu_fm_Mu(I, D1, Mu, lamb)
+	U1 = simu_fm_uniform(I, D1, mu1, lamb1)
 	V1 = simu_fm_uniform(J, D1, mu1, lamb1)
 	T1 = simu_fm_uniform(K, D1, mu1, lamb1)
 
@@ -87,7 +62,6 @@ def simu_Y1(lamb, mu1, lamb1):		# (work on global scale)
 				draw = np.random.normal(mean, sigma)
 				Y1[(k,i,j)] = draw
 	return
-
 
 
 
@@ -119,7 +93,6 @@ def simu_alpha(alpha0, beta0):		# (work on global scale)
 
 	shape = alpha0
 	scale = 1.0 / beta0
-
 	alpha = np.random.gamma(shape, scale)
 	return
 
@@ -149,40 +122,6 @@ if __name__ == "__main__":
 
 	print "this is simulator..."
 
-	##==== load X
-	list_indiv = np.load("./data_real/Individual_list.npy")
-
-	X = []
-	for indiv in list_indiv:
-		file = open("./data_real/genotype_450_dosage_matrix_qc/chr22/SNP_dosage_" + indiv + ".txt", 'r')
-		X.append([])
-		while 1:
-			line = (file.readline()).strip()
-			if not line:
-				break
-
-			dosage = float(line)
-			X[-1].append(dosage)
-		file.close()
-	X = np.array(X)
-
-	print "dosage matrix shape:",
-	print X.shape
-
-
-
-
-	## TODO: debug
-	X_new = []
-	for i in range(len(X)):
-		X_new.append(X[i][:S])
-	X = np.array(X_new)
-
-
-
-
-
-
 	##==== simulation
 	## I will treat all observed variables as input of simu functions
 	mu = 0						## TODO
@@ -203,16 +142,12 @@ if __name__ == "__main__":
 	##==== saving
 	print "now saving the simulated data and model..."
 
-	print "X shape:", X.shape
-	np.save("./data_simu/X", X)
 	print "Y shape:", Y.shape
 	np.save("./data_simu/Y", Y)
 	print "Y1 shape:", Y1.shape
 	np.save("./data_simu/Y1", Y1)
 	print "U1 shape:", U1.shape
 	np.save("./data_simu/U1", U1)
-	print "Beta shape:", Beta.shape
-	np.save("./data_simu/Beta", Beta)
 	print "V1 shape:", V1.shape
 	np.save("./data_simu/V1", V1)
 	print "T1 shape:", T1.shape
@@ -226,7 +161,6 @@ if __name__ == "__main__":
 	print "T2 shape:", T2.shape
 	np.save("./data_simu/T2", T2)
 	np.save("./data_simu/alpha", np.array([alpha]))
-
 
 
 

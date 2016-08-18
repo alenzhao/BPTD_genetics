@@ -1,7 +1,7 @@
+## this samples the data from simulator1.py: a symmetric tensor, whose factors are all with uniform Gaussian's
+
 ## simulate from real genotype data and the model
 ## simulation is for testing purpose (convergence)
-
-
 
 # TODO: didn't implement the incomplete tensor
 
@@ -12,21 +12,17 @@ import math
 import numpy as np
 import scipy.special as sps
 import timeit
-import re
 
 
 
 
 
 ##==== global variables
-X = []
 Y = []
-markerset = []
 Y1 = []
 U1 = []
 V1 = []
 T1 = []
-Beta = []
 Y2 = []
 U2 = []
 V2 = []
@@ -36,12 +32,8 @@ alpha = 1
 K = 13
 I = 159
 J = 585
-S = 14056
 D1 = 40
 D2 = 40
-
-N_element = 0
-
 
 
 loglike_total = []
@@ -54,25 +46,11 @@ loglike_T1 = []
 loglike_U2 = []
 loglike_V2 = []
 loglike_T2 = []
-loglike_Beta = []
 loglike_alpha = []
 
 
 
 
-
-##=================
-## misc routines
-##=================
-# for individual ID: get the "xxx-yyy" from "xxx-yyy-zzz-aaa-qqq", which is defined as the individual ID of the GTEx samples
-pattern_indiv = re.compile(r'^(\w)+([\-])(\w)+')
-def get_individual_id(s):
-	match = pattern_indiv.match(s)
-	if match:
-		return match.group()
-	else:
-		print "!!! no individual ID is found..."
-		return ""
 
 
 def tensor_cal(T, U, V):
@@ -98,15 +76,12 @@ def tensor_cal(T, U, V):
 
 
 
-
-
-
 ##=================
 ## sampler
 ##=================
 ## NOTE: here we assume no entries are missing in the tensor
 def sampler_subT(lamb):								## (global function)
-	global Y, Y1, Y2, U1, V1, T1, U2, V2, T2, I, J, K, alpha, markerset
+	global Y, Y1, Y2, U1, V1, T1, U2, V2, T2, I, J, K, alpha
 
 	##==== sample Y1
 	print "sample Y1..."
@@ -118,20 +93,15 @@ def sampler_subT(lamb):								## (global function)
 	lamb2 = alpha
 	lamb_new = lamb1 + lamb2
 	mean_new = (lamb1 / lamb_new) * mean1 + (lamb2 / lamb_new) * mean2
-	#== sample
+	#== sampling
 	sigma = math.sqrt(1.0 / lamb_new)
-	sigma1 = math.sqrt(1.0 / lamb1)
 	for k in range(K):
 		for i in range(I):
 			for j in range(J):
-				if markerset[(k,i,j)] == 1:
-					mu = mean_new[(k,i,j)]
-					draw = np.random.normal(mu, sigma)
-					Y1[(k,i,j)] = draw
-				else:
-					mu = mean1[(k,i,j)]
-					draw = np.random.normal(mu, sigma1)
-					Y1[(k,i,j)] = draw
+				mu = mean_new[(k,i,j)]
+				draw = np.random.normal(mu, sigma)
+				Y1[(k,i,j)] = draw
+
 
 	##==== sample Y2
 	print "sample Y2..."
@@ -143,43 +113,18 @@ def sampler_subT(lamb):								## (global function)
 	lamb2 = alpha
 	lamb_new = lamb1 + lamb2
 	mean_new = (lamb1 / lamb_new) * mean1 + (lamb2 / lamb_new) * mean2
-	#== sample
+	#== sampling
 	sigma = math.sqrt(1.0 / lamb_new)
-	sigma1 = math.sqrt(1.0 / lamb1)
 	for k in range(K):
 		for i in range(I):
 			for j in range(J):
-				if markerset[(k,i,j)] == 1:
-					mu = mean_new[(k,i,j)]
-					draw = np.random.normal(mu, sigma)
-					Y2[(k,i,j)] = draw
-				else:
-					mu = mean1[(k,i,j)]
-					draw = np.random.normal(mu, sigma1)
-					Y2[(k,i,j)] = draw
+				mu = mean_new[(k,i,j)]
+				draw = np.random.normal(mu, sigma)
+				Y2[(k,i,j)] = draw
 	return
 
 
-
-
 """
-def LaplaceApprox_2D(x, data, mean1, coef, lamb1, mean2, lamb2):
-	## likelihood: x, data, mean1, coef, lamb1
-	## prior: mean2, lamb2
-
-	##==== pre-cal
-	lamb = lamb1 * np.sum( np.power(coef, 2) ) + lamb2
-	mean = lamb1 * np.sum( np.multiply( coef, (data - mean1 + coef * x) ) ) + lamb2 * mean2
-	mean = mean / lamb
-
-	##==== sampler
-	sigma = math.sqrt(1.0 / lamb)
-	mu = mean
-	draw = np.random.normal(mu, sigma)
-	return draw
-
-
-
 def LaplaceApprox_3D(x, data, mean1, coef, lamb1, mean2, lamb2):
 	## likelihood: x, data, mean1, coef, lamb1
 	## prior: mean2, lamb2
@@ -198,62 +143,8 @@ def LaplaceApprox_3D(x, data, mean1, coef, lamb1, mean2, lamb2):
 
 
 
-
-
 def sampler_factor(lamb0, mu1, lamb1):						## (global function)
-	global X, Y, Y1, U1, V1, T1, Beta, Y2, U2, V2, T2, alpha, K, I, J, S, D1, D2
-
-	##==== sample Beta
-	print "sample Beta..."
-	U1_reshape = np.transpose(U1)
-	X_reshape = np.transpose(X)
-	U1_reshape_exp = np.dot(Beta, X_reshape)
-	## X_lamb_list
-	X_lamb_list = np.zeros(len(X_reshape))
-	for s in range(len(X_lamb_list)):
-		X_lamb_list[s] = lamb0 * np.sum( np.power(X_reshape[s], 2) ) + lamb1
-
-	## NOTE: for Beta (wide matrix), to avoid redundent computation; this could be used also fro others
-	## NOTE: this is not yet extended to other modules
-	beta_last = 0
-	mean_matrix = np.dot(Beta, X_reshape)
-	mean1 = []
-
-	for d in range(D1):
-		for s in range(S):
-			x = Beta[(d, s)]
-			data = U1_reshape[d]
-
-			## NOTE: mean1 should be updated
-			#mean1 = U1_reshape_exp[d]
-			## NOTE: re-do the following everytime would be prohabitive
-			#array = Beta[d]
-			#mean1 = np.tensordot( array, X_reshape, axes=([0,0]) )
-
-			if s == 0:
-				mean1 = mean_matrix[d]
-				beta_last = x
-			else:
-				mean1 = mean1 - beta_last * X_reshape[s-1] + Beta[(d, s-1)] * X_reshape[s-1]
-				beta_last = x
-
-
-			coef = X_reshape[s]
-
-			lamb = X_lamb_list[s]
-			mean = lamb0 * np.sum( np.multiply( coef, (data - mean1 + coef * x) ) ) + lamb1 * mu1
-			mean = mean / lamb
-
-			##==== sampler
-			sigma = math.sqrt(1.0 / lamb)
-			mu = mean
-			draw = np.random.normal(mu, sigma)
-			Beta[(d,s)] = draw
-
-
-
-
-
+	global Y, Y1, U1, V1, T1, Y2, U2, V2, T2, alpha, K, I, J, D1, D2
 
 
 	##==== sample the others (order of tensor dimensions: K, I, J)
@@ -284,23 +175,7 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 	## TV_lamb_list
 	TV_lamb_list = np.zeros(D1)
 	for d in range(D1):
-		TV_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb0
-	## mu_matrix
-	Beta_reshape = np.transpose(Beta)
-	mu_matrix = np.dot(X, Beta_reshape)
-
-	##
-	'''
-	u_last = 0
-	mean_tensor = tensor_cal(T1, U1, V1)
-	mean_tensor_reshape = np.zeros((I, K, J))
-	for i in range(I):
-		for k in range(K):
-			for j in range(J):
-				mean_tensor_reshape[(i,k,j)] = mean_tensor[(k,i,j)]
-	mean1 = []
-	'''
-
+		TV_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb1
 	#### sampling
 	for i in range(I):
 		for d in range(D1):
@@ -313,21 +188,10 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			array = U1[i]
 			mean1 = np.tensordot( array, coef_tensor_reshape, axes=([0,2]) )
 
-			'''
-			if d == 0:
-				mean1 = mean_tensor_reshape[i]
-				u_last = x
-			else:
-				mean1 = mean1 - u_last * coef_tensor[d-1] + U1[(i, d-1)] * coef_tensor[d-1]
-				u_last = x
-			'''
-
-
 			coef = coef_tensor[d]			## good
 
 			lamb = TV_lamb_list[d]
-			mu = mu_matrix[i][d]
-			mean = lamb0 * np.sum( np.multiply( coef, (data - mean1 + coef * x) ) ) + lamb0 * mu
+			mean = lamb0 * np.sum( np.multiply( coef, (data - mean1 + coef * x) ) ) + lamb1 * mu1
 			mean = mean / lamb
 
 			##==== sampler
@@ -363,19 +227,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 	TU_lamb_list = np.zeros(D1)
 	for d in range(D1):
 		TU_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb1
-
-	##
-	'''
-	v_last = 0
-	mean_tensor = tensor_cal(T1, U1, V1)
-	mean_tensor_reshape = np.zeros((J, K, I))
-	for j in range(J):
-		for k in range(K):
-			for i in range(I):
-				mean_tensor_reshape[(j,k,i)] = mean_tensor[(k,i,j)]
-	mean1 = []
-	'''
-
 	#### sampling
 	for j in range(J):
 		for d in range(D1):
@@ -387,16 +238,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			#array = np.array([V1[j]])
 			array = V1[j]
 			mean1 = np.tensordot( array, coef_tensor_reshape, axes=([0,2]) )
-
-			'''
-			if d == 0:
-				mean1 = mean_tensor_reshape[j]
-				v_last = x
-			else:
-				mean1 = mean1 - v_last * coef_tensor[d-1] + V1[(j, d-1)] * coef_tensor[d-1]
-				v_last = x
-			'''
-
 
 			coef = coef_tensor[d]			## good
 
@@ -431,14 +272,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 	UV_lamb_list = np.zeros(D1)
 	for d in range(D1):
 		UV_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb1
-
-	##
-	'''
-	t_last = 0
-	mean_tensor = tensor_cal(T1, U1, V1)
-	mean1 = []
-	'''
-
 	#### sampling
 	for k in range(K):
 		for d in range(D1):
@@ -451,16 +284,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			array = T1[k]
 			mean1 = np.tensordot( array, coef_tensor_reshape, axes=([0,2]) )
 
-			'''
-			if d == 0:
-				mean1 = mean_tensor[k]
-				t_last = x
-			else:
-				mean1 = mean1 - t_last * coef_tensor[d-1] + T1[(k, d-1)] * coef_tensor[d-1]
-				t_last = x
-			'''
-
-
 			coef = coef_tensor[d]			## good
 
 			lamb = UV_lamb_list[d]
@@ -472,9 +295,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			mu = mean
 			draw = np.random.normal(mu, sigma)
 			T1[(k,d)] = draw
-
-
-
 
 
 
@@ -508,19 +328,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 	TV_lamb_list = np.zeros(D2)
 	for d in range(D2):
 		TV_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb1
-
-	##
-	'''
-	u_last = 0
-	mean_tensor = tensor_cal(T2, U2, V2)
-	mean_tensor_reshape = np.zeros((I, K, J))
-	for i in range(I):
-		for k in range(K):
-			for j in range(J):
-				mean_tensor_reshape[(i,k,j)] = mean_tensor[(k,i,j)]
-	mean1 = []
-	'''
-
 	#### sampling
 	for i in range(I):
 		for d in range(D2):
@@ -532,16 +339,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			#array = np.array([U2[i]])
 			array = U2[i]
 			mean1 = np.tensordot( array, coef_tensor_reshape, axes=([0,2]) )
-
-			'''
-			if d == 0:
-				mean1 = mean_tensor_reshape[i]
-				u_last = x
-			else:
-				mean1 = mean1 - u_last * coef_tensor[d-1] + U2[(i, d-1)] * coef_tensor[d-1]
-				u_last = x
-			'''
-
 
 			coef = coef_tensor[d]			## good
 
@@ -582,19 +379,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 	TU_lamb_list = np.zeros(D2)
 	for d in range(D2):
 		TU_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb1
-
-	##
-	'''
-	v_last = 0
-	mean_tensor = tensor_cal(T2, U2, V2)
-	mean_tensor_reshape = np.zeros((J, K, I))
-	for j in range(J):
-		for k in range(K):
-			for i in range(I):
-				mean_tensor_reshape[(j,k,i)] = mean_tensor[(k,i,j)]
-	mean1 = []
-	'''
-
 	#### sampling
 	for j in range(J):
 		for d in range(D2):
@@ -606,16 +390,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			#array = np.array([V2[j]])
 			array = V2[j]
 			mean1 = np.tensordot( array, coef_tensor_reshape, axes=([0,2]) )
-
-			'''
-			if d == 0:
-				mean1 = mean_tensor_reshape[j]
-				v_last = x
-			else:
-				mean1 = mean1 - v_last * coef_tensor[d-1] + V2[(j, d-1)] * coef_tensor[d-1]
-				v_last = x
-			'''
-
 
 			coef = coef_tensor[d]			## good
 
@@ -650,14 +424,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 	UV_lamb_list = np.zeros(D2)
 	for d in range(D2):
 		UV_lamb_list[d] = lamb0 * np.sum( np.power(coef_tensor[d], 2) ) + lamb1
-
-	##
-	'''
-	t_last = 0
-	mean_tensor = tensor_cal(T2, U2, V2)
-	mean1 = []
-	'''
-
 	#### sampling
 	for k in range(K):
 		for d in range(D2):
@@ -669,16 +435,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			#array = np.array([T2[k]])
 			array = T2[k]
 			mean1 = np.tensordot( array, coef_tensor_reshape, axes=([0,2]) )
-
-			'''
-			if d == 0:
-				mean1 = mean_tensor[k]
-				t_last = x
-			else:
-				mean1 = mean1 - t_last * coef_tensor[d-1] + T2[(k, d-1)] * coef_tensor[d-1]
-				t_last = x
-			'''
-
 
 			coef = coef_tensor[d]			## good
 
@@ -692,8 +448,6 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 			draw = np.random.normal(mu, sigma)
 			T2[(k,d)] = draw
 
-
-
 	return
 
 
@@ -702,13 +456,12 @@ def sampler_factor(lamb0, mu1, lamb1):						## (global function)
 
 
 def sampler_precision(alpha0, beta0):			## (global function)
-	global Y, Y1, Y2, I, J, K, alpha, markerset, N_element
+	global Y, Y1, Y2, I, J, K, alpha
 
+	##==== sample alpha
 	print "sample alpha..."
-	#alpha_new = alpha0 + 0.5 * (I * J * K)
-	alpha_new = alpha0 + 0.5 * N_element
-	#temp = np.sum( np.power( Y - Y1 - Y2, 2) )
-	temp = np.sum( np.multiply( np.power(Y - Y1 - Y2, 2), markerset) )
+	alpha_new = alpha0 + 0.5 * (I * J * K)
+	temp = np.sum( np.power(Y - Y1 - Y2, 2) )
 	beta_new = beta0 + 0.5 * temp
 	shape = alpha_new
 	scale = 1.0 / beta_new
@@ -743,17 +496,6 @@ def loglike_gaussian_uni(data, mu, lamb):		## NOTE: removed constant terms
 	return loglike
 
 
-## loglike of Gaussian's for a matrix with given mean matrix
-def loglike_gaussian_Mu(data, Mu, lamb):
-	sigma = math.sqrt(1.0 / lamb)
-
-	loglike = 0
-	amount = len(data) * len(data[0])
-	loglike += amount * ( - np.log( sigma ) )
-	loglike += (- np.sum( np.power(data - Mu, 2) / (2 * sigma**2) ) )
-	return loglike
-
-
 ## loglike of Gaussian's for a tensor with given mean tensor
 def loglike_gaussian_tensor(data, Mu, lamb):
 	sigma = math.sqrt(1.0 / lamb)
@@ -764,20 +506,6 @@ def loglike_gaussian_tensor(data, Mu, lamb):
 	loglike += (- np.sum( np.power(data - Mu, 2) / (2 * sigma**2) ) )
 	return loglike
 
-
-## loglike of Gaussian's for the data (with markerset indicating the incomplete tensor)
-def loglike_gaussian_data(data, Mu):
-	global alpha, markerset, N_element
-
-	sigma = math.sqrt(1.0 / alpha)
-	data1 = np.multiply( data, markerset )
-	Mu1 = np.multiply( Mu, markerset )
-
-	loglike = 0
-	amount = N_element
-	loglike += amount * ( - np.log( sigma ) )
-	loglike += (- np.sum( np.power(data1 - Mu1, 2) / (2 * sigma**2) ) )
-	return loglike
 
 
 ## loglike og Gamma
@@ -793,18 +521,19 @@ def loglike_gamma(obs, alpha, beta):
 
 
 def loglike_cal(mu0, lamb0, alpha0, beta0):							## (global function)
-	global X, Y, Y1, U1, V1, T1, Beta, Y2, U2, V2, T2, alpha, K, I, J, S, D1, D2
+	global Y, Y1, U1, V1, T1, Y2, U2, V2, T2, alpha, K, I, J, D1, D2
 	global loglike_total, loglike_data, loglike_Y1, loglike_Y2
-	global loglike_U1, loglike_V1, loglike_T1, loglike_U2, loglike_V2, loglike_T2, loglike_Beta, loglike_alpha
+	global loglike_U1, loglike_V1, loglike_T1, loglike_U2, loglike_V2, loglike_T2, loglike_alpha
 
 	print "calculating the loglike..."
 	loglike_cumu = 0
 
 	##==== loglike_data
-	loglike = loglike_gaussian_data(Y, Y1 + Y2)
+	loglike = loglike_gaussian_tensor(Y, Y1 + Y2, alpha)
 	loglike_data.append(loglike)
 	np.save("./result/loglike_data", np.array(loglike_data))
 	loglike_cumu += loglike
+	print "loglike data:", loglike
 
 	##==== loglike_Y1
 	mean = tensor_cal(T1, U1, V1)
@@ -812,6 +541,7 @@ def loglike_cal(mu0, lamb0, alpha0, beta0):							## (global function)
 	loglike_Y1.append(loglike)
 	np.save("./result/loglike_Y1", np.array(loglike_Y1))
 	loglike_cumu += loglike
+	print "loglike Y1:", loglike
 
 	##==== loglike_Y2
 	mean = tensor_cal(T2, U2, V2)
@@ -819,177 +549,64 @@ def loglike_cal(mu0, lamb0, alpha0, beta0):							## (global function)
 	loglike_Y2.append(loglike)
 	np.save("./result/loglike_Y2", np.array(loglike_Y2))
 	loglike_cumu += loglike
+	print "loglike Y2:", loglike
 
 	##==== loglike_U1
-	Beta_reshape = np.transpose(Beta)
-	mean = np.dot(X, Beta_reshape)
-	loglike = loglike_gaussian_Mu(U1, mean, lamb0)
+	loglike = loglike_gaussian_uni(U1, mu0, lamb0)
 	loglike_U1.append(loglike)
 	np.save("./result/loglike_U1", np.array(loglike_U1))
 	loglike_cumu += loglike
+	print "loglike U1:", loglike
 
 	##==== loglike_V1
 	loglike = loglike_gaussian_uni(V1, mu0, lamb0)
 	loglike_V1.append(loglike)
 	np.save("./result/loglike_V1", np.array(loglike_V1))
 	loglike_cumu += loglike
+	print "loglike V1:", loglike
 
 	##==== loglike_T1
 	loglike = loglike_gaussian_uni(T1, mu0, lamb0)
 	loglike_T1.append(loglike)
 	np.save("./result/loglike_T1", np.array(loglike_T1))
 	loglike_cumu += loglike
+	print "loglike T1:", loglike
 
 	##==== loglike_U2
 	loglike = loglike_gaussian_uni(U2, mu0, lamb0)
 	loglike_U2.append(loglike)
 	np.save("./result/loglike_U2", np.array(loglike_U2))
 	loglike_cumu += loglike
+	print "loglike U2:", loglike
 
 	##==== loglike_V2
 	loglike = loglike_gaussian_uni(V2, mu0, lamb0)
 	loglike_V2.append(loglike)
 	np.save("./result/loglike_V2", np.array(loglike_V2))
 	loglike_cumu += loglike
+	print "loglike V2:", loglike
 
 	##==== loglike_T2
 	loglike = loglike_gaussian_uni(T2, mu0, lamb0)
 	loglike_T2.append(loglike)
 	np.save("./result/loglike_T2", np.array(loglike_T2))
 	loglike_cumu += loglike
-
-	##==== loglike_Beta
-	loglike = loglike_gaussian_uni(Beta, mu0, lamb0)
-	loglike_Beta.append(loglike)
-	np.save("./result/loglike_Beta", np.array(loglike_Beta))
-	loglike_cumu += loglike
+	print "loglike T2:", loglike
 
 	##==== loglike_alpha
 	loglike = loglike_gamma(alpha, alpha0, beta0)
 	loglike_alpha.append(loglike)
 	np.save("./result/loglike_alpha", np.array(loglike_alpha))
 	loglike_cumu += loglike
+	print "loglike alpha:", loglike
 
 	##==== loglike_total
 	loglike_total.append(loglike_cumu)
 	np.save("./result/loglike_total", np.array(loglike_total))
+	print "loglike total:", loglike_cumu
 
 	return
 
-
-
-
-##=================
-## data loading
-##=================
-def data_load_simu():
-	global X, Y
-	global Y1, U1, Beta, V1, T1, Y2, U2, V2, T2
-	global K, I, J, S, D1, D2
-	global alpha, markerset, N_element
-
-	##==== load data
-	X = np.load("./data_simu/X.npy")
-	print "dosage matrix shape:",
-	print X.shape
-	Y = np.load("./data_simu/Y.npy")
-
-	##==== load parameters
-	Y1 = np.load("./data_simu/Y1.npy")
-	U1 = np.load("./data_simu/U1.npy")
-	Beta = np.load("./data_simu/Beta.npy")
-	V1 = np.load("./data_simu/V1.npy")
-	T1 = np.load("./data_simu/T1.npy")
-	Y2 = np.load("./data_simu/Y2.npy")
-	U2 = np.load("./data_simu/U2.npy")
-	V2 = np.load("./data_simu/V2.npy")
-	T2 = np.load("./data_simu/T2.npy")
-	alpha = np.load("./data_simu/alpha.npy")[0]
-
-	##==== fill in the dimensions
-	shape = Y.shape
-	K = shape[0]
-	I = shape[1]
-	J = shape[2]
-	shape = Beta.shape
-	S = shape[1]
-	D1 = shape[0]
-	shape = U2.shape
-	D2 = shape[1]
-
-	##==== the others
-	markerset = np.ones((K, I, J))
-	N_element = np.sum(markerset)
-
-	return
-
-
-
-
-def data_load_real():
-	global X, Y
-	global Y1, U1, Beta, V1, T1, Y2, U2, V2, T2
-	global K, I, J, S, D1, D2
-	global alpha, markerset, N_element
-
-	##==== load parameters, init
-	U1 = np.load("./data_real/U1.npy")
-	V1 = np.load("./data_real/V1.npy")
-	T1 = np.load("./data_real/T1.npy")
-	U2 = np.load("./data_real/U2.npy")
-	V2 = np.load("./data_real/V2.npy")
-	T2 = np.load("./data_real/T2.npy")
-	Y1 = np.load("./data_real/Y1.npy")
-	Y2 = np.load("./data_real/Y2.npy")
-	Beta = np.load("./data_real/Beta.npy")
-
-	##==== fill in the dimensions
-	shape = Y1.shape
-	K = shape[0]
-	I = shape[1]
-	J = shape[2]
-	shape = Beta.shape
-	S = shape[1]
-	D1 = shape[0]
-	shape = U2.shape
-	D2 = shape[1]
-
-	##==== load data
-	X = np.load("./data_real/X.npy")
-	# Y (dataset), markerset
-	dataset = np.zeros((K, I, J))
-	markerset = np.zeros((K, I, J))
-	list_tissue = np.load("data_real/tensor/Tissue_list.npy")
-	list_indiv = np.load("data_real/tensor/Individual_list.npy")
-	rep_indiv = {}
-	for i in range(len(list_indiv)):
-		individual = list_indiv[i]
-		rep_indiv[individual] = i
-
-	for i in range(len(list_tissue)):
-		tissue = list_tissue[i]
-		list_sample = np.load("data_real/tensor/Tensor_tissue_" + str(i) + "_list.npy")
-
-		data = np.load("data_real/tensor/Tensor_tissue_" + str(i) + ".npy")
-		for j in range(len(list_sample)):
-			sample = list_sample[j]
-			individual = get_individual_id(sample)
-			index = rep_indiv[individual]
-			dataset[i][index] = data[j]
-			markerset[i][index] = np.ones(J)
-
-	dataset = np.array(dataset)
-	Y = dataset
-	markerset = np.array(markerset)
-	print "dataset and markerset shape:",
-	print dataset.shape,
-	print markerset.shape
-
-	##==== init others
-	alpha = 1		# just random
-	N_element = np.sum(markerset)
-
-	return
 
 
 
@@ -1004,9 +621,31 @@ if __name__ == '__main__':
 
 
 
-	#data_load_simu()
-	data_load_real()
+	##==== load parameters
+	## data
+	Y = np.load("./data_simu/Y.npy")
+	## para init
+	Y1 = np.load("./data_init/Y1.npy")
+	U1 = np.load("./data_init/U1.npy")
+	V1 = np.load("./data_init/V1.npy")
+	T1 = np.load("./data_init/T1.npy")
+	Y2 = np.load("./data_init/Y2.npy")
+	U2 = np.load("./data_init/U2.npy")
+	V2 = np.load("./data_init/V2.npy")
+	T2 = np.load("./data_init/T2.npy")
+	alpha = np.load("./data_init/alpha.npy")[0]
 
+
+
+	##==== fill in the dimensions
+	shape = Y.shape
+	K = shape[0]
+	I = shape[1]
+	J = shape[2]
+	shape = U1.shape
+	D1 = shape[1]
+	shape = U2.shape
+	D2 = shape[1]
 
 
 
@@ -1028,20 +667,16 @@ if __name__ == '__main__':
 	loglike_U2 = []
 	loglike_V2 = []
 	loglike_T2 = []
-	loglike_Beta = []
 	loglike_alpha = []
 
 
 	ITER = 5000					## TODO
 	for i in range(ITER):
-		print "now working on iter#", i
-
+		print "now working on iter#", i+1
 
 
 		##==== timer
 		start_time = timeit.default_timer()
-
-
 
 
 		##==== sample all
@@ -1056,7 +691,6 @@ if __name__ == '__main__':
 
 		np.save("./result/Y1", Y1)
 		np.save("./result/U1", U1)
-		np.save("./result/Beta", Beta)
 		np.save("./result/V1", V1)
 		np.save("./result/T1", T1)
 		np.save("./result/Y2", Y2)
@@ -1076,12 +710,10 @@ if __name__ == '__main__':
 
 
 
-
 	## save learned parameters
 	print "now saving the learned models..."
 	np.save("./result/Y1", Y1)
 	np.save("./result/U1", U1)
-	np.save("./result/Beta", Beta)
 	np.save("./result/V1", V1)
 	np.save("./result/T1", T1)
 	np.save("./result/Y2", Y2)
@@ -1089,7 +721,6 @@ if __name__ == '__main__':
 	np.save("./result/V2", V2)
 	np.save("./result/T2", T2)
 	np.save("./result/alpha", np.array([alpha]))
-
 
 
 
