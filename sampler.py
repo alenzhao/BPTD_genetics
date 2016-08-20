@@ -3,7 +3,19 @@
 
 
 
-# TODO: didn't implement the incomplete tensor
+
+
+
+## several identified issues through simulation test:
+##	1. lamb0 and lamb1 problem, which lambda it is? —> sometimes it’s alpha, note this
+##	2. the real Gibbs sampling (with the right order) for the multi-linear uni-Gaussian
+##	3. speed up the Beta module (only works for very large matrix, say, Beta, but slower for other smaller factors)
+
+
+
+
+
+
 
 
 

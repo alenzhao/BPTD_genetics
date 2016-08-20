@@ -8,7 +8,7 @@ from numpy.linalg import inv
 if __name__== "__main__":
 
 
-	fm_loading = np.load('data_simu/V.npy')						# TODO
+	fm_loading = np.load('result/T2.npy')								# TODO
 
 #	fm_loading = np.load('data_init/Lambda_gene.npy')					# TODO
 #	fm_loading = np.load('result/fm_tissue.npy')						# TODO
