@@ -2,8 +2,8 @@ CC=	g++
 #OPT=	-std=c++11 -static-libstdc++ -Wall -pg
 OPT=	-std=c++11 -static-libstdc++
 LIBS=	-lm -lpthread
-SRCS=	main.cpp
-OBJS=	main.o
+SRCS=	main.cpp data_interface.cpp sampler.cpp loglike.cpp utility.cpp
+OBJS=	main.o data_interface.o sampler.o loglike.o utility.o
 
 EXECUTABLE=	main
 
@@ -23,4 +23,3 @@ clean:
 
 mv:
 	@chmod 755 $(EXECUTABLE)
-
