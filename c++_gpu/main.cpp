@@ -28,6 +28,7 @@ using namespace std;
 
 
 //==== global var definition
+//==== data and model
 Matrix X;
 Tensor Y;
 Tensor markerset;
@@ -53,8 +54,7 @@ int N_element = 0;
 
 
 
-
-
+//==== loglike
 vector<float> loglike_total;
 vector<float> loglike_data;
 vector<float> loglike_Y1;
@@ -74,14 +74,18 @@ vector<float> loglike_alpha;
 
 
 
+
 int main()
 {
 	cout << "now entering the sampling program..." << endl;
 
 
-	//==== data loading
+	//==== data loading, and data preparation
 	//data_load_simu()
 	data_load_real();
+	loglike_init();
+
+
 
 
 	//==== pre-setting some parameters
@@ -92,18 +96,7 @@ int main()
 	float beta0 = 0.5;					// TODO
 
 
-	loglike_total.clear();
-	loglike_data.clear();
-	loglike_Y1.clear();
-	loglike_Y2.clear();
-	loglike_U1.clear();
-	loglike_V1.clear();
-	loglike_T1.clear();
-	loglike_U2.clear();
-	loglike_V2.clear();
-	loglike_T2.clear();
-	loglike_Beta.clear();
-	loglike_alpha.clear();
+
 
 
 	int ITER = 50;						// TODO
@@ -137,9 +130,12 @@ int main()
 
 
 
-
 	//==== save the learned model
 	data_save();
+	loglike_save();
+
+
+
 
 
 

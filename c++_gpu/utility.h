@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>       /* pow */
+#include <string>
+#include <string.h>
+#include <vector>
 #include "global.h"
 
 
@@ -142,6 +145,27 @@ public:
 		return;
 	}
 
+	// used for loading data, since we might use other containers to load data first of all
+	void init(vector<vector<float>> & container)
+	{
+		dimension1 = container.size();
+		dimension2 = (container.at(0)).size();
+		matrix = (float *)calloc( dimension1 * dimension2, sizeof(float) );
+
+		int count = 0;
+		for(int i=0; i<dimension1; i++)
+		{
+			for(int j=0; j<dimension2; j++)
+			{
+				float value = (container.at(i)).at(j);
+				matrix[count] = value;
+				count += 1;
+			}
+		}
+
+		return;
+	}
+
 	int get_dimension1()
 	{
 		return dimension1;
@@ -242,6 +266,32 @@ public:
 		return;
 	}
 
+	// given a filename, try to save this matrix into a file
+	void save(char * filename)
+	{
+		FILE * file_out = fopen(filename, "w+");
+		if(file_out == NULL)
+		{
+		    fputs("File error\n", stderr); exit(1);
+		}
+
+		for(int i=0; i<dimension1; i++)
+		{
+			int start = i * dimension2;
+			for(int j=0; j<dimension2; j++)
+			{
+				int index = start + j;
+				float value = matrix[index];
+				char buf[1024];
+				sprintf(buf, "%f\t", value);
+				fwrite(buf, sizeof(char), strlen(buf), file_out);
+			}
+			fwrite("\n", sizeof(char), 1, file_out);
+		}
+		fclose(file_out);
+		return;
+	}
+
 
 	// delete object
 	void release()
@@ -269,6 +319,45 @@ public:
 		dimension2 = length2;
 		dimension3 = length3;
 		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
+		return;
+	}
+
+	void init(int length1, int length2, int length3, float value)
+	{
+		dimension1 = length1;
+		dimension2 = length2;
+		dimension3 = length3;
+		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
+		for(int i=0; i<dimension1*dimension2*dimension3; i++)
+		{
+			tensor[i] = value;
+		}
+
+		return;
+	}
+
+	// used for loading data, since we might use other containers to load data first of all
+	void init(vector<vector<vector<float>>> & container)
+	{
+		dimension1 = container.size();
+		dimension2 = (container.at(0)).size();
+		dimension3 = ((container.at(0)).at(0)).size();
+		tensor = (float *)calloc( dimension1 * dimension2 * dimension3, sizeof(float) );
+
+		int count = 0;
+		for(int i=0; i<dimension1; i++)
+		{
+			for(int j=0; j<dimension2; j++)
+			{
+				for(int d=0; d<dimension3; d++)
+				{
+					float value = ((container.at(i)).at(j)).at(d);
+					tensor[count] = value;
+					count += 1;
+				}
+			}
+		}
+
 		return;
 	}
 
@@ -343,6 +432,44 @@ public:
 		{
 			tensor[i] = pow(tensor[i], exp);
 		}
+		return;
+	}
+
+	// given a filename, try to save this matrix into a file
+	void save(char * filename)
+	{
+		FILE * file_out = fopen(filename, "w+");
+		if(file_out == NULL)
+		{
+		    fputs("File error\n", stderr); exit(1);
+		}
+
+		char buf[1024];
+		sprintf(buf, "%d\t", dimension1);
+		fwrite(buf, sizeof(char), strlen(buf), file_out);
+		sprintf(buf, "%d\t", dimension2);
+		fwrite(buf, sizeof(char), strlen(buf), file_out);
+		sprintf(buf, "%d\t", dimension3);
+		fwrite(buf, sizeof(char), strlen(buf), file_out);
+		fwrite("\n", sizeof(char), 1, file_out);
+
+		for(int k=0; k<dimension1; k++)
+		{
+			for(int i=0; i<dimension2; i++)
+			{
+				int start = k * dimension2 * dimension3 + i * dimension3;
+				for(int j=0; j<dimension3; j++)
+				{
+					int index = start + j;
+					float value = tensor[index];
+					char buf[1024];
+					sprintf(buf, "%f\t", value);
+					fwrite(buf, sizeof(char), strlen(buf), file_out);
+				}
+				fwrite("\n", sizeof(char), 1, file_out);
+			}
+		}
+		fclose(file_out);
 		return;
 	}
 
