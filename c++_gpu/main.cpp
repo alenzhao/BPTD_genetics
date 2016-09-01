@@ -99,7 +99,7 @@ int main()
 
 
 
-	int ITER = 10;						// TODO
+	int ITER = 50;						// TODO
 	for(int i=0; i<ITER; i++)
 	{
 		cout << "now working on iter#" << i << endl;

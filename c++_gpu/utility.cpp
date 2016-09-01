@@ -34,7 +34,7 @@ void cal_arrayaddon_multicoef(Array array1, Array array2, float coef)
 
 
 
-// add the coef x Matrix matrix2 to the Matrix matrix1
+// add the float coef x Matrix matrix2 to the Matrix matrix1, in place for Matrix matrix1
 void cal_matrixaddon_multicoef(Matrix matrix1, Matrix matrix2, float coef)
 {
 	int dimension1 = matrix1.get_dimension1();
@@ -334,7 +334,7 @@ Tensor cal_tensor_innerprod(Matrix matrix1, Matrix matrix2, Matrix matrix3)
 
 
 // now I hard code this function to dot along (0, 2) axis (0 of array, and 2 of tensor)
-Matrix cal_tensordot(Array array, Tensor tensor, int pos1, int pos2)
+Matrix cal_tensordot(Array array, Tensor tensor)
 {
 	Matrix matrix;
 	int dimension1 = tensor.get_dimension1();
@@ -449,7 +449,7 @@ Tensor op_tensor_reshape(Tensor tensor, int pos1, int pos2, int pos3)
 
 
 
-// NOTE: the following two functions touch the internal contents of these Class
+// NOTE: the following two functions touch the internal contents of these Class, so need to be carefully used !!!
 Array extract_array_from_matrix(Matrix matrix, int ind)
 {
 	Array array;
@@ -477,5 +477,6 @@ Matrix extract_matrix_from_tensor(Tensor tensor, int ind)
 
 	return matrix;
 }
+
 
 

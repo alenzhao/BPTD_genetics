@@ -553,7 +553,7 @@ Matrix cal_matrixmul(Matrix, Matrix);
 
 Tensor cal_tensorouter(Matrix, Matrix);
 Tensor cal_tensor_innerprod(Matrix, Matrix, Matrix);
-Matrix cal_tensordot(Array, Tensor, int, int);
+Matrix cal_tensordot(Array, Tensor);
 
 Matrix op_matrix_rotate(Matrix);
 Tensor op_tensor_reshape(Tensor, int, int, int);
