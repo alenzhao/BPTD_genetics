@@ -20,7 +20,7 @@ using namespace std;
 
 // loglike of Gaussian's for a Matrix matrix with given mean value
 // NOTE: removed constant terms
-float loglike_gaussian_uni(Matrix data, float mu, float lambda)
+float loglike_gaussian_uni(Matrix & data, float mu, float lambda)
 {
 	float sigma = sqrt(1.0 / lambda);
 
@@ -31,8 +31,11 @@ float loglike_gaussian_uni(Matrix data, float mu, float lambda)
 
 	Matrix temp = cal_matrixsubtract(data, mu);
 	temp.power(2.0);
-	float temp = temp.sum();
-	loglike += ( - temp / ( 2 * pow(sigma, 2.0) ) );
+	float temp_value = temp.sum();
+	loglike += ( - temp_value / ( 2 * pow(sigma, 2.0) ) );
+
+	//==##== collector ==##==
+	temp.release();
 
 	return loglike;
 }
@@ -40,7 +43,7 @@ float loglike_gaussian_uni(Matrix data, float mu, float lambda)
 
 
 // loglike of Gaussian's for a Matrix matrix with given mean Matrix Mu
-float loglike_gaussian_matrix(Matrix data, Matrix Mu, float lambda)
+float loglike_gaussian_matrix(Matrix & data, Matrix & Mu, float lambda)
 {
 	float sigma = sqrt(1.0 / lambda);
 
@@ -51,8 +54,11 @@ float loglike_gaussian_matrix(Matrix data, Matrix Mu, float lambda)
 
 	Matrix temp = cal_matrixsubtract(data, Mu);
 	temp.power(2.0);
-	float temp = temp.sum();
-	loglike += ( - temp / ( 2 * pow(sigma, 2.0) ) );
+	float temp_value = temp.sum();
+	loglike += ( - temp_value / ( 2 * pow(sigma, 2.0) ) );
+
+	//==##== collector ==##==
+	temp.release();
 
 	return loglike;
 }
@@ -60,7 +66,7 @@ float loglike_gaussian_matrix(Matrix data, Matrix Mu, float lambda)
 
 
 // loglike of Gaussian's for a tensor with given mean tensor
-float loglike_gaussian_tensor(Tensor data, Tensor Mu, float lambda)
+float loglike_gaussian_tensor(Tensor & data, Tensor & Mu, float lambda)
 {
 	float sigma = sqrt(1.0 / lambda);
 
@@ -71,8 +77,11 @@ float loglike_gaussian_tensor(Tensor data, Tensor Mu, float lambda)
 
 	Tensor temp = cal_tensorsubtract(data, Mu);
 	temp.power(2.0);
-	float temp = temp.sum();
-	loglike += ( - temp / ( 2 * pow(sigma, 2.0) ) );
+	float temp_value = temp.sum();
+	loglike += ( - temp_value / ( 2 * pow(sigma, 2.0) ) );
+
+	//==##== collector ==##==
+	temp.release();
 
 	return loglike;
 }
@@ -80,7 +89,7 @@ float loglike_gaussian_tensor(Tensor data, Tensor Mu, float lambda)
 
 
 // loglike of Gaussian's for the data (with markerset indicating the incomplete tensor)
-float loglike_gaussian_data(Tensor data, Tensor Mu)
+float loglike_gaussian_data(Tensor & data, Tensor & Mu)
 {
 	float sigma = sqrt(1.0 / alpha);
 
@@ -94,8 +103,13 @@ float loglike_gaussian_data(Tensor data, Tensor Mu)
 
 	Tensor temp = cal_tensorsubtract(data1, Mu1);
 	temp.power(2.0);
-	float temp = temp.sum();
-	loglike += ( - temp / ( 2 * pow(sigma, 2.0) ) );
+	float temp_value = temp.sum();
+	loglike += ( - temp_value / ( 2 * pow(sigma, 2.0) ) );
+
+	//==##== collector ==##==
+	data1.release();
+	Mu1.release();
+	temp.release();
 
 	return loglike;
 }
@@ -140,25 +154,34 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	loglike = loglike_gaussian_data(Y, mean);
 	loglike_data.push_back(loglike);
 	loglike_cumu += loglike;
+	//==##== collector ==##==
+	mean.release();
 
 	//==== loglike_Y1
 	mean = cal_tensor_innerprod(T1, U1, V1);
 	loglike = loglike_gaussian_tensor(Y1, mean, lambda0);
 	loglike_Y1.push_back(loglike);
 	loglike_cumu += loglike;
+	//==##== collector ==##==
+	mean.release();
 
 	//==== loglike_Y2
 	mean = cal_tensor_innerprod(T2, U2, V2);
 	loglike = loglike_gaussian_tensor(Y2, mean, lambda0);
 	loglike_Y2.push_back(loglike);
 	loglike_cumu += loglike;
+	//==##== collector ==##==
+	mean.release();
 
 	//==== loglike_U1
 	Matrix Beta_reshape = op_matrix_rotate(Beta);
-	Matrix mean = cal_matrixmul(X, Beta_reshape);
-	loglike = loglike_gaussian_matrix(U1, mean, lambda0);
+	Matrix mean_matrix = cal_matrixmul(X, Beta_reshape);
+	loglike = loglike_gaussian_matrix(U1, mean_matrix, lambda0);
 	loglike_U1.push_back(loglike);
 	loglike_cumu += loglike;
+	//==##== collector ==##==
+	Beta_reshape.release();
+	mean_matrix.release();
 
 	//==== loglike_V1
 	loglike = loglike_gaussian_uni(V1, mu0, lambda0);

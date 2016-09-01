@@ -1,17 +1,24 @@
 /*
 
-
 Thanks for stopping by!
 
+The format of the input/output data:
+1. Everything in Matrix format should be in matrix format
+2. The tensor has one line meta information, the shape of the tensor, and then the tensor is spread as a matrix (collapsed the first dimension)
+3. I will also re-prepare the incomplete tensor such that there are only numbers: integer-indexing tissues as usual; inside each tissue, integer indexing individual positions to have this expression sample (one extra integer at the head of each line)
 
 */
 
+
+
 #include <iostream>
-#include <string>		/* stof */
+#include <string>		/* stof, stod */
 #include <stdlib.h>     /* atoi */
 #include "global.h"
 #include "data_interface.h"
 #include "utility.h"
+#include "lib_io_file.h"
+#include "lib_op_line.h"
 
 
 
@@ -45,7 +52,8 @@ void load_matrix(Matrix & matrix, char * filename)
 		for(unsigned i=0; i<line_obj.size(); i++)
 		{
 			char * pointer = line_obj.at(i);
-			float value = stof(pointer);
+			//float value = stof(pointer);			// NOTE: there are double-range numbers
+			float value = stod(pointer);
 			vec.push_back(value);
 		}
 		line_obj.release();
@@ -116,7 +124,8 @@ void load_tensor(Tensor & tensor, char * filename)
 			for(unsigned i=0; i<line_obj.size(); i++)
 			{
 				char * pointer = line_obj.at(i);
-				float value = stof(pointer);
+				//float value = stof(pointer);				// there are double-range numbers
+				float value = stod(pointer);
 				vec.push_back(value);
 			}
 			line_obj.release();
@@ -212,7 +221,7 @@ void data_load_simu()
 	//==== the others
 	markerset.init(K, I, J, 1);
 	N_element = int(markerset.sum());
-	alpha = 1.0				// NOTE: need to manually set this
+	alpha = 1.0;				// NOTE: need to manually set this
 
 
 	return;
@@ -288,7 +297,7 @@ void data_load_real()
 	// Y (dataset), markerset
 	Y.init(K, I, J);
 	markerset.init(K, I, J, 0);
-	for(int k=0; k<dimension1; k++)
+	for(int k=0; k<K; k++)
 	{
 		char filename[100];
 		filename[0] = '\0';
@@ -317,7 +326,8 @@ void data_load_real()
 			for(unsigned i=1; i<line_obj.size(); i++)		// NOTE: here we start from pos#1
 			{
 				char * pointer = line_obj.at(i);
-				float value = stof(pointer);
+				//float value = stof(pointer);				// NOTE: there are double-range numbers
+				float value = stod(pointer);
 				vec.push_back(value);
 			}
 			line_obj.release();
@@ -350,27 +360,38 @@ void data_load_real()
 
 
 
-
-
 // save the learned model
 // where: "../result/"
 void data_save()
 {
 	cout << "now saving the learned models... (Y1, Y2, U1, V1, T1, Beta, U2, V2, T2, alpha)" << endl;
 
-	Y1.save("../result/Y1.txt");
-	U1.save("../result/U1.txt");
-	Beta.save("../result/Beta.txt");
-	V1.save("../result/V1.txt");
-	T1.save("../result/T1.txt");
-	Y2.save("../result/Y2.txt");
-	U2.save("../result/U2.txt");
-	V2.save("../result/V2.txt");
-	T2.save("../result/T2.txt");
+	char filename[100];
+
+	//==== matrix
+	//== U1
+	sprintf(filename, "../result/Y1.txt");
+	Y1.save(filename);
+	sprintf(filename, "../result/U1.txt");
+	U1.save(filename);
+	sprintf(filename, "../result/Beta.txt");
+	Beta.save(filename);
+	sprintf(filename, "../result/V1.txt");
+	V1.save(filename);
+	sprintf(filename, "../result/T1.txt");
+	T1.save(filename);
+	sprintf(filename, "../result/Y2.txt");
+	Y2.save(filename);
+	sprintf(filename, "../result/U2.txt");
+	U2.save(filename);
+	sprintf(filename, "../result/V2.txt");
+	V2.save(filename);
+	sprintf(filename, "../result/T2.txt");
+	T2.save(filename);
 
 
 	// NOTE: specially for alpha
-	char filename[] = "../result/alpha.txt";
+	sprintf(filename, "../result/alpha.txt");
 	FILE * file_out = fopen(filename, "w+");
 	if(file_out == NULL)
 	{

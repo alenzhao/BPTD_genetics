@@ -44,7 +44,7 @@ void cal_matrixaddon_multicoef(Matrix matrix1, Matrix matrix2, float coef)
 	{
 		for(int j=0; j<dimension2; j++)
 		{
-			matrix1.addon(i, j, coef * maitrx2.get_element(i, j));
+			matrix1.addon(i, j, coef * matrix2.get_element(i, j));
 		}
 	}
 
@@ -80,6 +80,24 @@ Tensor cal_tensoradd_multicoef( float coef1, Tensor tensor1, float coef2, Tensor
 
 
 
+// subtract the Array array2 from the Array array1
+Array cal_arraysubtract(Array array1, Array array2)
+{
+	Array array;
+	int dimension = array1.get_dimension();
+	array.init(dimension);
+
+	for(int i=0; i<dimension; i++)
+	{
+		float value = array1.get_element(i) - array2.get_element(i);
+		array.set_element(i, value);
+	}
+
+	return array;
+}
+
+
+
 // subtract the Matrix matrix2 from the Matrix matrix1
 Matrix cal_matrixsubtract(Matrix matrix1, Matrix matrix2)
 {
@@ -102,7 +120,7 @@ Matrix cal_matrixsubtract(Matrix matrix1, Matrix matrix2)
 
 
 // subtract the float value from the Matrix matrix1
-Matrix cal_matrixsubtract(Matrix matrix1, float value);
+Matrix cal_matrixsubtract(Matrix matrix1, float value)
 {
 	Matrix matrix;
 	int dimension1 = matrix1.get_dimension1();
@@ -130,7 +148,6 @@ Tensor cal_tensorsubtract(Tensor tensor1, Tensor tensor2)
 	int dimension1 = tensor1.get_dimension1();
 	int dimension2 = tensor1.get_dimension2();
 	int dimension3 = tensor1.get_dimension3();
-
 	tensor.init(dimension1, dimension2, dimension3);
 
 	for(int k=0; k<dimension1; k++)
@@ -175,7 +192,7 @@ void cal_matrixmultion(Matrix matrix1, Matrix matrix2)
 	{
 		for(int j=0; j<dimension2; j++)
 		{
-			matrix1.set_element(i, j, maitrx1.get_element(i, j) * maitrx2.get_element(i, j));
+			matrix1.set_element(i, j, matrix1.get_element(i, j) * matrix2.get_element(i, j));
 		}
 	}
 
@@ -268,7 +285,6 @@ Tensor cal_tensorouter(Matrix matrix1, Matrix matrix2)
 	int dimension1 = matrix1.get_dimension1();
 	int dimension2 = matrix2.get_dimension1();
 	int dimension3 = matrix1.get_dimension2();
-
 	result.init(dimension1, dimension2, dimension3);
 
 	for(int i=0; i<dimension1; i++)
@@ -294,7 +310,6 @@ Tensor cal_tensor_innerprod(Matrix matrix1, Matrix matrix2, Matrix matrix3)
 	int dimension2 = matrix2.get_dimension1();
 	int dimension3 = matrix3.get_dimension1();
 	int d_factor = matrix1.get_dimension2();
-
 	tensor.init(dimension1, dimension2, dimension3);
 
 	for(int k=0; k<dimension1; k++)
@@ -325,7 +340,6 @@ Matrix cal_tensordot(Array array, Tensor tensor, int pos1, int pos2)
 	int dimension1 = tensor.get_dimension1();
 	int dimension2 = tensor.get_dimension2();
 	int dimension3 = tensor.get_dimension3();
-
 	matrix.init(dimension1, dimension2);
 
 	for(int i=0; i<dimension1; i++)
@@ -352,12 +366,13 @@ Matrix op_matrix_rotate(Matrix matrix)
 	Matrix result;
 	int dimension1 = matrix.get_dimension2();
 	int dimension2 = matrix.get_dimension1();
+	result.init(dimension1, dimension2);
 
 	for(int i=0; i<dimension1; i++)
 	{
 		for(int j=0; j<dimension2; j++)
 		{
-			float value = matrix.get_element(j ,i);
+			float value = matrix.get_element(j, i);
 			result.set_element(i, j, value);
 		}
 	}
@@ -430,5 +445,37 @@ Tensor op_tensor_reshape(Tensor tensor, int pos1, int pos2, int pos3)
 	return result;
 }
 
+
+
+
+
+// NOTE: the following two functions touch the internal contents of these Class
+Array extract_array_from_matrix(Matrix matrix, int ind)
+{
+	Array array;
+	int dimension2 = matrix.get_dimension2();
+
+	int shift = ind * dimension2;
+	float * pointer = matrix.get_matrix();
+	array.init( dimension2, (pointer+shift) );
+
+	return array;
+}
+
+
+
+
+Matrix extract_matrix_from_tensor(Tensor tensor, int ind)
+{
+	Matrix matrix;
+	int dimension2 = tensor.get_dimension2();
+	int dimension3 = tensor.get_dimension3();
+
+	int shift = ind * dimension2 * dimension3;
+	float * pointer = tensor.get_tensor();
+	matrix.init( dimension2, dimension3, (pointer+shift) );
+
+	return matrix;
+}
 
 

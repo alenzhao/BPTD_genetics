@@ -13,7 +13,6 @@
 #include <string>
 #include <string.h>
 #include <vector>
-#include "global.h"
 
 
 
@@ -38,10 +37,18 @@ public:
 	void init(int length, float * data)
 	{
 		dimension = length;
+		array = (float *)calloc( length, sizeof(float) );
+
 		for(int i=0; i<length; i++)
 		{
 			array[i] = data[i];
 		}
+		return;
+	}
+
+	void print_shape()
+	{
+		cout << "this array has shape: " << dimension << endl;
 		return;
 	}
 
@@ -94,6 +101,29 @@ public:
 		return result;
 	}
 
+	// given a filename, try to save this array into a file
+	void save(char * filename)
+	{
+		FILE * file_out = fopen(filename, "w+");
+		if(file_out == NULL)
+		{
+		    fputs("File error\n", stderr); exit(1);
+		}
+
+		for(int i=0; i<dimension; i++)
+		{
+			float value = array[i];
+			char buf[1024];
+			sprintf(buf, "%f\t", value);
+			fwrite(buf, sizeof(char), strlen(buf), file_out);
+		}
+		fwrite("\n", sizeof(char), 1, file_out);
+		fclose(file_out);
+
+		return;
+	}
+
+
 	// delete the object
 	void release()
 	{
@@ -137,6 +167,7 @@ public:
 	{
 		dimension1 = length1;
 		dimension2 = length2;
+		matrix = (float *)calloc( length1 * length2, sizeof(float) );
 
 		for(int i=0; i<length1*length2; i++)
 		{
@@ -163,6 +194,12 @@ public:
 			}
 		}
 
+		return;
+	}
+
+	void print_shape()
+	{
+		cout << "this matrix has shape: " << dimension1 << ", " << dimension2 << endl;
 		return;
 	}
 
@@ -204,6 +241,7 @@ public:
 	}
 
 	// pick up one array from Matrix and return Array
+	/* following couldn't work
 	Array get_array(int ind)
 	{
 		Array array;
@@ -211,6 +249,7 @@ public:
 		array.init( dimension2, (matrix+shift) );
 		return array;
 	}
+	*/
 
 	// sum all elements
 	float sum()
@@ -361,6 +400,12 @@ public:
 		return;
 	}
 
+	void print_shape()
+	{
+		cout << "this tensor has shape: " << dimension1 << ", " << dimension2 << ", " << dimension3 << endl;
+		return;
+	}
+
 	int get_dimension1()
 	{
 		return dimension1;
@@ -395,6 +440,7 @@ public:
 		return;
 	}
 
+	/* following couldn't work
 	Matrix get_matrix(int ind)
 	{
 		Matrix matrix;
@@ -402,6 +448,7 @@ public:
 		matrix.init( dimension2, dimension3, (tensor+shift) );
 		return matrix;
 	}
+	*/
 
 	float sum()
 	{
@@ -435,7 +482,7 @@ public:
 		return;
 	}
 
-	// given a filename, try to save this matrix into a file
+	// given a filename, try to save this tensor into a file
 	void save(char * filename)
 	{
 		FILE * file_out = fopen(filename, "w+");
@@ -492,6 +539,7 @@ void cal_arrayaddon_multicoef(Array, Array, float);
 void cal_matrixaddon_multicoef(Matrix, Matrix, float);
 Tensor cal_tensoradd_multicoef(float, Tensor, float, Tensor);
 
+Array cal_arraysubtract(Array, Array);
 Matrix cal_matrixsubtract(Matrix, Matrix);
 Matrix cal_matrixsubtract(Matrix, float);
 Tensor cal_tensorsubtract(Tensor, Tensor);
@@ -510,7 +558,8 @@ Matrix cal_tensordot(Array, Tensor, int, int);
 Matrix op_matrix_rotate(Matrix);
 Tensor op_tensor_reshape(Tensor, int, int, int);
 
-
+Array extract_array_from_matrix(Matrix, int);
+Matrix extract_matrix_from_tensor(Tensor, int);
 
 
 

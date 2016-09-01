@@ -99,7 +99,7 @@ int main()
 
 
 
-	int ITER = 50;						// TODO
+	int ITER = 10;						// TODO
 	for(int i=0; i<ITER; i++)
 	{
 		cout << "now working on iter#" << i << endl;
@@ -119,6 +119,7 @@ int main()
 
 		//==== cal loglike
 		loglike_cal(mu, lamb, alpha0, beta0);
+		cout << "[@@] total loglike after this iteration: " << loglike_total.back() << endl;
 
 
 		//==== timer ends
