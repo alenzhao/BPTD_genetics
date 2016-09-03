@@ -9,11 +9,20 @@ Thanks for coming! I know you will use some of my as utilities.
 #include <iostream>
 #include <vector>
 #include "utility.h"
+#include "utility_gpu.cuh"
 
 
 
 
 using namespace std;
+
+
+
+
+//==== indicating CPU or GPU (if appplicable)
+int indicator_GPU = 1;
+
+
 
 
 
@@ -260,17 +269,37 @@ Matrix cal_matrixmul(Matrix matrix1, Matrix matrix2)
 	int d_factor = matrix1.get_dimension2();
 	result.init(dimension1, dimension2);
 
-	for(int i=0; i<dimension1; i++)
+
+	if(!indicator_GPU)			// CPU compute
 	{
-		for(int j=0; j<dimension2; j++)
+		for(int i=0; i<dimension1; i++)
 		{
-			float value = 0;
-			for(int d=0; d<d_factor; d++)
+			for(int j=0; j<dimension2; j++)
 			{
-				value += matrix1.get_element(i, d) * matrix2.get_element(d, j);
+				float value = 0;
+				for(int d=0; d<d_factor; d++)
+				{
+					value += matrix1.get_element(i, d) * matrix2.get_element(d, j);
+				}
+				result.set_element(i, j, value);
 			}
-			result.set_element(i, j, value);
 		}
+	}
+	else 						// GPU compute
+	{
+		sMatrixSize matrix_size;
+		matrix_size.uiWA = d_factor;
+		matrix_size.uiHA = dimension1;
+		matrix_size.uiWB = dimension2;
+		matrix_size.uiHB = d_factor;
+		matrix_size.uiWC = matrix_size.uiWB;
+		matrix_size.uiHC = matrix_size.uiHA;
+
+		float * pointer_A = matrix1.get_matrix();
+		float * pointer_B = matrix2.get_matrix();
+		float * pointer_C = result.get_matrix();
+
+		gpu_cal_matrixmul(pointer_A, pointer_B, pointer_C, matrix_size);
 	}
 
 	return result;

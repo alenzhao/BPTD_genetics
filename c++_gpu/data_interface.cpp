@@ -129,8 +129,8 @@ void load_tensor(Tensor & tensor, char * filename)
 				vec.push_back(value);
 			}
 			line_obj.release();
-
 			(container_temp.at(i)).push_back(vec);
+
 		}
 	}
 
@@ -343,8 +343,8 @@ void data_load_real()
 	}
 
 	cout << "Y and markerset shape:" << endl;
-	cout << Y.get_dimension1() << ", " << Y.get_dimension2() << ", " << Y.get_dimension3() << endl;
-	cout << markerset.get_dimension1() << ", " << markerset.get_dimension2() << ", " << markerset.get_dimension3() << endl;
+	cout << "(" << Y.get_dimension1() << ", " << Y.get_dimension2() << ", " << Y.get_dimension3() << ")" << endl;
+	cout << "(" << markerset.get_dimension1() << ", " << markerset.get_dimension2() << ", " << markerset.get_dimension3() << ")" << endl;
 
 
 	//==========================================

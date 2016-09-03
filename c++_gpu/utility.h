@@ -148,6 +148,7 @@ public:
 		dimension1 = length1;
 		dimension2 = length2;
 		matrix = (float *)calloc( length1 * length2, sizeof(float) );
+
 		for(int i=0; i<length1*length2; i++)
 		{
 			matrix[i] = value;
@@ -169,7 +170,8 @@ public:
 		dimension2 = length2;
 		matrix = (float *)calloc( length1 * length2, sizeof(float) );
 
-		for(int i=0; i<length1*length2; i++)
+		int amount = dimension1*dimension2;
+		for(int i=0; i<amount; i++)
 		{
 			matrix[i] = data[i];
 		}
@@ -367,7 +369,9 @@ public:
 		dimension2 = length2;
 		dimension3 = length3;
 		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
-		for(int i=0; i<dimension1*dimension2*dimension3; i++)
+
+		int amount = dimension1*dimension2*dimension3;
+		for(int i=0; i<amount; i++)
 		{
 			tensor[i] = value;
 		}
@@ -567,3 +571,4 @@ Matrix extract_matrix_from_tensor(Tensor, int);
 #endif
 
 // end of utility.h
+

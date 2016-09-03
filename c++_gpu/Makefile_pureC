@@ -1,0 +1,26 @@
+CC=	g++
+#OPT=	-std=c++11 -static-libstdc++ -Wall -pg
+#OPT=	-std=c++11 -static-libstdc++ -pg
+OPT=	-std=c++11 -static-libstdc++
+LIBS=	-lm -lpthread
+SRCS=	main.cpp data_interface.cpp sampler.cpp loglike.cpp utility.cpp
+OBJS=	main.o data_interface.o sampler.o loglike.o utility.o
+
+EXECUTABLE=	main
+
+
+
+all: main clean mv
+
+
+$(OBJS): $(SRCS)
+	$(CC) -c $*.cpp $(OPT)
+
+main: $(OBJS)
+	$(CC) -o $(EXECUTABLE) $(OBJS) $(OPT) $(LIBS)
+
+clean:
+	-rm -f *.o
+
+mv:
+	@chmod 755 $(EXECUTABLE)

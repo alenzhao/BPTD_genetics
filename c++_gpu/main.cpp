@@ -99,7 +99,7 @@ int main()
 
 
 
-	int ITER = 50;						// TODO
+	int ITER = 500;						// TODO
 	for(int i=0; i<ITER; i++)
 	{
 		cout << "now working on iter#" << i << endl;
@@ -111,15 +111,18 @@ int main()
 		gettimeofday(&time_start, NULL);
 
 
+
 		//==== sample all
 		sampler_subT(lamb);
 		sampler_factor(lamb, mu, lamb);
 		sampler_precision(alpha0, beta0);
 
 
-		//==== cal loglike
+
+		//==== cal loglike  --> TODO: probably call this several iterations once
 		loglike_cal(mu, lamb, alpha0, beta0);
 		cout << "[@@] total loglike after this iteration: " << loglike_total.back() << endl;
+
 
 
 		//==== timer ends

@@ -1,6 +1,6 @@
 /*
 
-Aha, here comes the GIbbs sampling program
+Aha, here comes the Gibbs sampling program
 
 
 */
@@ -170,12 +170,11 @@ void Gibbs_uniGaussian_fm(
 			Matrix & mu_matrix,
 			Tensor & mean_tensor)
 {
-	float entry_last = 0;
-	// need: mean_tensor
-	Matrix mean1;
-
 	for(int i=0; i<d_feature; i++)
 	{
+		float entry_last = 0;
+		Matrix mean1 = extract_matrix_from_tensor(mean_tensor, i);
+
 		for(int d=0; d<d_factor; d++)
 		{
 			//== prepare
@@ -186,14 +185,13 @@ void Gibbs_uniGaussian_fm(
 			//Matrix mean1 = cal_tensordot(array, coef_tensor_reshape);
 			if(d == 0)
 			{
-				mean1 = extract_matrix_from_tensor(mean_tensor, i);
 				entry_last = x;
 			}
 			else
 			{
 				float entry_new = fm.get_element(i, d-1);
 				Matrix matrix = extract_matrix_from_tensor(coef_tensor, d-1);
-				cal_matrixaddon_multicoef(mean1, matrix, entry_new - entry_last);
+				cal_matrixaddon_multicoef( mean1, matrix, entry_new - entry_last );
 				entry_last = x;
 
 				//==##== collector ==##==
@@ -231,11 +229,11 @@ void Gibbs_uniGaussian_fm(
 			coef.release();
 			temp.release();
 		}
+
+		//==##== collector ==##==
+		mean1.release();
+
 	}
-
-
-	//==##== collector ==##==
-	mean1.release();
 
 
 	return;
@@ -257,12 +255,13 @@ void Gibbs_uniGaussian_Beta(
 			Array & lambda_list)
 {
 	// NOTE: for Beta (wide matrix), to avoid redundent computation; this could probably be used also for others
-	float beta_last = 0;
 	Matrix mean_matrix = cal_matrixmul(Beta, X_reshape);
-	Array mean1;
 
 	for(int d=0; d<d_factor; d++)
 	{
+		float beta_last = 0;
+		Array mean1 = extract_array_from_matrix(mean_matrix, d);
+
 		for(int s=0; s<d_snp; s++)
 		{
 			//== prepare
@@ -271,7 +270,6 @@ void Gibbs_uniGaussian_Beta(
 
 			if(s == 0)
 			{
-				mean1 = extract_array_from_matrix(mean_matrix, d);
 				beta_last = x;
 			}
 			else
@@ -316,11 +314,15 @@ void Gibbs_uniGaussian_Beta(
 			coef.release();
 			temp.release();
 		}
+
+
+		//==##== collector ==##==
+		mean1.release();
+
 	}
 
 	//==##== collector ==##==
 	mean_matrix.release();
-	mean1.release();
 
 
 	return;
@@ -343,20 +345,21 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//== X_reshape
 	Matrix X_reshape = op_matrix_rotate(X);
 	//== lambda_list
-	Array lambda_list;
-	lambda_list.init(S);
+	Array lambda_list_beta;
+	lambda_list_beta.init(S);
 	for(int s=0; s<S; s++)
 	{
 		float value = lambda0 * X_reshape.sum_of_square(s) + lambda1;
-		lambda_list.set_element(s, value);
+		lambda_list_beta.set_element(s, value);
 	}
 	//== sampling
-	Gibbs_uniGaussian_Beta(lambda0, lambda1, D1, S, Beta, U1_reshape, X_reshape, lambda_list);
+	Gibbs_uniGaussian_Beta(lambda0, lambda1, D1, S, Beta, U1_reshape, X_reshape, lambda_list_beta);
 
 	//==##== collector ==##==
 	U1_reshape.release();
 	X_reshape.release();
-	lambda_list.release();
+	lambda_list_beta.release();
+
 
 
 
@@ -371,7 +374,7 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//== coef_tensor: (D, K, J)
 	Tensor coef_tensor = op_tensor_reshape(coef_tensor_reshape, 2, 0, 1);
 	//== lambda_list
-	//Array lambda_list;
+	Array lambda_list;
 	lambda_list.init(D1);
 	for(int d=0; d<D1; d++)
 	{
@@ -403,37 +406,36 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//==== V1
 	cout << "sample V1..." << endl;
 	//== Y1_reshape
-	//Tensor Y1_reshape = op_tensor_reshape(Y1, 2, 0, 1);
-	Y1_reshape = op_tensor_reshape(Y1, 2, 0, 1);
+	Tensor Y1_reshape1 = op_tensor_reshape(Y1, 2, 0, 1);
 	//== coef_tensor_reshape: (K, I, D)
-	coef_tensor_reshape = cal_tensorouter(T1, U1);
+	Tensor coef_tensor_reshape1 = cal_tensorouter(T1, U1);
 	//== coef_tensor: (D, K, I)
-	coef_tensor = op_tensor_reshape(coef_tensor_reshape, 2, 0, 1);
+	Tensor coef_tensor1 = op_tensor_reshape(coef_tensor_reshape1, 2, 0, 1);
 	//== lambda_list
-	//Array lambda_list;
-	lambda_list.init(D1);
+	Array lambda_list1;
+	lambda_list1.init(D1);
 	for(int d=0; d<D1; d++)
 	{
-		float temp = lambda0 * coef_tensor.sum_of_square(d) + lambda1;
-		lambda_list.set_element(d, temp);
+		float temp = lambda0 * coef_tensor1.sum_of_square(d) + lambda1;
+		lambda_list1.set_element(d, temp);
 	}
 	//== mu_matrix
-	//Matrix mu_matrix;
-	mu_matrix.init(J, D1, mu1);		// to make function standard
+	Matrix mu_matrix1;
+	mu_matrix1.init(J, D1, mu1);		// to make function standard
 	//== mean_tensor
-	mean_tensor = cal_tensor_innerprod(T1, U1, V1);
-	mean_tensor_reshape = op_tensor_reshape(mean_tensor, 2, 0, 1);
+	Tensor mean_tensor1 = cal_tensor_innerprod(T1, U1, V1);
+	Tensor mean_tensor_reshape1 = op_tensor_reshape(mean_tensor1, 2, 0, 1);
 	//== sampling
-	Gibbs_uniGaussian_fm(lambda0, lambda1, J, D1, V1, Y1_reshape, coef_tensor, coef_tensor_reshape, lambda_list, mu_matrix, mean_tensor_reshape);
+	Gibbs_uniGaussian_fm(lambda0, lambda1, J, D1, V1, Y1_reshape1, coef_tensor1, coef_tensor_reshape1, lambda_list1, mu_matrix1, mean_tensor_reshape1);
 
 	//==##== collector ==##==
-	Y1_reshape.release();
-	coef_tensor.release();
-	coef_tensor_reshape.release();
-	lambda_list.release();
-	mu_matrix.release();
-	mean_tensor.release();
-	mean_tensor_reshape.release();
+	Y1_reshape1.release();
+	coef_tensor1.release();
+	coef_tensor_reshape1.release();
+	lambda_list1.release();
+	mu_matrix1.release();
+	mean_tensor1.release();
+	mean_tensor_reshape1.release();
 
 
 
@@ -441,36 +443,36 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//==== T1
 	cout << "sample T1..." << endl;
 	//== Y1_reshape
-	Y1_reshape = op_tensor_reshape(Y1, 0, 1, 2);
+	Tensor Y1_reshape2 = op_tensor_reshape(Y1, 0, 1, 2);
 	//== coef_tensor_reshape: (I, J, D)
-	coef_tensor_reshape = cal_tensorouter(U1, V1);
+	Tensor coef_tensor_reshape2 = cal_tensorouter(U1, V1);
 	//== coef_tensor: (D, I, J)
-	coef_tensor = op_tensor_reshape(coef_tensor_reshape, 2, 0, 1);
+	Tensor coef_tensor2 = op_tensor_reshape(coef_tensor_reshape2, 2, 0, 1);
 	//== lambda_list
-	//Array lambda_list;
-	lambda_list.init(D1);
+	Array lambda_list2;
+	lambda_list2.init(D1);
 	for(int d=0; d<D1; d++)
 	{
-		float temp = lambda0 * coef_tensor.sum_of_square(d) + lambda1;
-		lambda_list.set_element(d, temp);
+		float temp = lambda0 * coef_tensor2.sum_of_square(d) + lambda1;
+		lambda_list2.set_element(d, temp);
 	}
 	//== mu_matrix
-	//Matrix mu_matrix;
-	mu_matrix.init(K, D1, mu1);		// to make function standard
+	Matrix mu_matrix2;
+	mu_matrix2.init(K, D1, mu1);		// to make function standard
 	//== mean_tensor
-	mean_tensor = cal_tensor_innerprod(T1, U1, V1);
-	mean_tensor_reshape = op_tensor_reshape(mean_tensor, 0, 1, 2);
+	Tensor mean_tensor2 = cal_tensor_innerprod(T1, U1, V1);
+	Tensor mean_tensor_reshape2 = op_tensor_reshape(mean_tensor2, 0, 1, 2);
 	//== sampling
-	Gibbs_uniGaussian_fm(lambda0, lambda1, K, D1, T1, Y1_reshape, coef_tensor, coef_tensor_reshape, lambda_list, mu_matrix, mean_tensor_reshape);
+	Gibbs_uniGaussian_fm(lambda0, lambda1, K, D1, T1, Y1_reshape2, coef_tensor2, coef_tensor_reshape2, lambda_list2, mu_matrix2, mean_tensor_reshape2);
 
 	//==##== collector ==##==
-	Y1_reshape.release();
-	coef_tensor.release();
-	coef_tensor_reshape.release();
-	lambda_list.release();
-	mu_matrix.release();
-	mean_tensor.release();
-	mean_tensor_reshape.release();
+	Y1_reshape2.release();
+	coef_tensor2.release();
+	coef_tensor_reshape2.release();
+	lambda_list2.release();
+	mu_matrix2.release();
+	mean_tensor2.release();
+	mean_tensor_reshape2.release();
 
 
 
@@ -480,37 +482,36 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//==== U2
 	cout << "sample U2..." << endl;
 	//== Y2_reshape
-	//Tensor Y2_reshape = op_tensor_reshape(Y2, 1, 0, 2);
-	Tensor Y2_reshape = op_tensor_reshape(Y2, 1, 0, 2);
+	Tensor Y2_reshape3 = op_tensor_reshape(Y2, 1, 0, 2);
 	//== coef_tensor_reshape: (K, J, D)
-	coef_tensor_reshape = cal_tensorouter(T2, V2);
+	Tensor coef_tensor_reshape3 = cal_tensorouter(T2, V2);
 	//== coef_tensor: (D, K, J)
-	coef_tensor = op_tensor_reshape(coef_tensor_reshape, 2, 0, 1);
+	Tensor coef_tensor3 = op_tensor_reshape(coef_tensor_reshape3, 2, 0, 1);
 	//== lambda_list
-	//Array lambda_list;
-	lambda_list.init(D2);
+	Array lambda_list3;
+	lambda_list3.init(D2);
 	for(int d=0; d<D2; d++)
 	{
-		float temp = lambda0 * coef_tensor.sum_of_square(d) + lambda1;
-		lambda_list.set_element(d, temp);
+		float temp = lambda0 * coef_tensor3.sum_of_square(d) + lambda1;
+		lambda_list3.set_element(d, temp);
 	}
 	//== mu_matrix
-	//Matrix mu_matrix;
-	mu_matrix.init(I, D2, mu1);		// to make function standard
+	Matrix mu_matrix3;
+	mu_matrix3.init(I, D2, mu1);		// to make function standard
 	//== mean_tensor
-	mean_tensor = cal_tensor_innerprod(T2, U2, V2);
-	mean_tensor_reshape = op_tensor_reshape(mean_tensor, 1, 0, 2);
+	Tensor mean_tensor3 = cal_tensor_innerprod(T2, U2, V2);
+	Tensor mean_tensor_reshape3 = op_tensor_reshape(mean_tensor3, 1, 0, 2);
 	//== sampling
-	Gibbs_uniGaussian_fm(lambda0, lambda1, I, D2, U2, Y2_reshape, coef_tensor, coef_tensor_reshape, lambda_list, mu_matrix, mean_tensor_reshape);
+	Gibbs_uniGaussian_fm(lambda0, lambda1, I, D2, U2, Y2_reshape3, coef_tensor3, coef_tensor_reshape3, lambda_list3, mu_matrix3, mean_tensor_reshape3);
 
 	//==##== collector ==##==
-	Y2_reshape.release();
-	coef_tensor.release();
-	coef_tensor_reshape.release();
-	lambda_list.release();
-	mu_matrix.release();
-	mean_tensor.release();
-	mean_tensor_reshape.release();
+	Y2_reshape3.release();
+	coef_tensor3.release();
+	coef_tensor_reshape3.release();
+	lambda_list3.release();
+	mu_matrix3.release();
+	mean_tensor3.release();
+	mean_tensor_reshape3.release();
 
 
 
@@ -518,37 +519,36 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//==== V2
 	cout << "sample V2..." << endl;
 	//== Y2_reshape
-	//Tensor Y2_reshape = op_tensor_reshape(Y2, 2, 0, 1);
-	Y2_reshape = op_tensor_reshape(Y2, 2, 0, 1);
+	Tensor Y2_reshape4 = op_tensor_reshape(Y2, 2, 0, 1);
 	//== coef_tensor_reshape: (K, I, D)
-	coef_tensor_reshape = cal_tensorouter(T2, U2);
+	Tensor coef_tensor_reshape4 = cal_tensorouter(T2, U2);
 	//== coef_tensor: (D, K, I)
-	coef_tensor = op_tensor_reshape(coef_tensor_reshape, 2, 0, 1);
+	Tensor coef_tensor4 = op_tensor_reshape(coef_tensor_reshape4, 2, 0, 1);
 	//== lambda_list
-	//Array lambda_list;
-	lambda_list.init(D2);
+	Array lambda_list4;
+	lambda_list4.init(D2);
 	for(int d=0; d<D2; d++)
 	{
-		float temp = lambda0 * coef_tensor.sum_of_square(d) + lambda1;
-		lambda_list.set_element(d, temp);
+		float temp = lambda0 * coef_tensor4.sum_of_square(d) + lambda1;
+		lambda_list4.set_element(d, temp);
 	}
 	//== mu_matrix
-	//Matrix mu_matrix;
-	mu_matrix.init(J, D2, mu1);		// to make function standard
+	Matrix mu_matrix4;
+	mu_matrix4.init(J, D2, mu1);		// to make function standard
 	//== mean_tensor
-	mean_tensor = cal_tensor_innerprod(T2, U2, V2);
-	mean_tensor_reshape = op_tensor_reshape(mean_tensor, 2, 0, 1);
+	Tensor mean_tensor4 = cal_tensor_innerprod(T2, U2, V2);
+	Tensor mean_tensor_reshape4 = op_tensor_reshape(mean_tensor4, 2, 0, 1);
 	//== sampling
-	Gibbs_uniGaussian_fm(lambda0, lambda1, J, D2, V2, Y2_reshape, coef_tensor, coef_tensor_reshape, lambda_list, mu_matrix, mean_tensor_reshape);
+	Gibbs_uniGaussian_fm(lambda0, lambda1, J, D2, V2, Y2_reshape4, coef_tensor4, coef_tensor_reshape4, lambda_list4, mu_matrix4, mean_tensor_reshape4);
 
 	//==##== collector ==##==
-	Y2_reshape.release();
-	coef_tensor.release();
-	coef_tensor_reshape.release();
-	lambda_list.release();
-	mu_matrix.release();
-	mean_tensor.release();
-	mean_tensor_reshape.release();
+	Y2_reshape4.release();
+	coef_tensor4.release();
+	coef_tensor_reshape4.release();
+	lambda_list4.release();
+	mu_matrix4.release();
+	mean_tensor4.release();
+	mean_tensor_reshape4.release();
 
 
 
@@ -556,36 +556,37 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//==== T2
 	cout << "sample T2..." << endl;
 	//== Y2_reshape
-	Y2_reshape = op_tensor_reshape(Y2, 0, 1, 2);
+	Tensor Y2_reshape5 = op_tensor_reshape(Y2, 0, 1, 2);
 	//== coef_tensor_reshape: (I, J, D)
-	coef_tensor_reshape = cal_tensorouter(U2, V2);
+	Tensor coef_tensor_reshape5 = cal_tensorouter(U2, V2);
 	//== coef_tensor: (D, I, J)
-	coef_tensor = op_tensor_reshape(coef_tensor_reshape, 2, 0, 1);
+	Tensor coef_tensor5 = op_tensor_reshape(coef_tensor_reshape5, 2, 0, 1);
 	//== lambda_list
-	//Array lambda_list;
-	lambda_list.init(D2);
+	Array lambda_list5;
+	lambda_list5.init(D2);
 	for(int d=0; d<D2; d++)
 	{
-		float temp = lambda0 * coef_tensor.sum_of_square(d) + lambda1;
-		lambda_list.set_element(d, temp);
+		float temp = lambda0 * coef_tensor5.sum_of_square(d) + lambda1;
+		lambda_list5.set_element(d, temp);
 	}
 	//== mu_matrix
-	//Matrix mu_matrix;
-	mu_matrix.init(K, D2, mu1);		// to make function standard
+	Matrix mu_matrix5;
+	mu_matrix5.init(K, D2, mu1);		// to make function standard
 	//== mean_tensor
-	mean_tensor = cal_tensor_innerprod(T2, U2, V2);
-	mean_tensor_reshape = op_tensor_reshape(mean_tensor, 0, 1, 2);
+	Tensor mean_tensor5 = cal_tensor_innerprod(T2, U2, V2);
+	Tensor mean_tensor_reshape5 = op_tensor_reshape(mean_tensor5, 0, 1, 2);
 	//== sampling
-	Gibbs_uniGaussian_fm(lambda0, lambda1, K, D2, T2, Y2_reshape, coef_tensor, coef_tensor_reshape, lambda_list, mu_matrix, mean_tensor_reshape);
+	Gibbs_uniGaussian_fm(lambda0, lambda1, K, D2, T2, Y2_reshape5, coef_tensor5, coef_tensor_reshape5, lambda_list5, mu_matrix5, mean_tensor_reshape5);
 
 	//==##== collector ==##==
-	Y2_reshape.release();
-	coef_tensor.release();
-	coef_tensor_reshape.release();
-	lambda_list.release();
-	mu_matrix.release();
-	mean_tensor.release();
-	mean_tensor_reshape.release();
+	Y2_reshape5.release();
+	coef_tensor5.release();
+	coef_tensor_reshape5.release();
+	lambda_list5.release();
+	mu_matrix5.release();
+	mean_tensor5.release();
+	mean_tensor_reshape5.release();
+
 
 
 
