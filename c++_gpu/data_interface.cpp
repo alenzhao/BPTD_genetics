@@ -148,7 +148,7 @@ void load_tensor(Tensor & tensor, char * filename)
 
 
 
-//// loading the simulated data
+//// loading the simulated data (I'll probably work on a full tensor, which has the upper bound for the computing)
 void data_load_simu()
 {
 	// global:
@@ -219,7 +219,8 @@ void data_load_simu()
 
 	//==========================================
 	//==== the others
-	markerset.init(K, I, J, 1);
+	int temp = 1;
+	markerset.init(K, I, J, temp);
 	N_element = int(markerset.sum());
 	alpha = 1.0;				// NOTE: need to manually set this
 
@@ -296,7 +297,8 @@ void data_load_real()
 
 	// Y (dataset), markerset
 	Y.init(K, I, J);
-	markerset.init(K, I, J, 0);
+	float temp = 0;
+	markerset.init(K, I, J, temp);
 	for(int k=0; k<K; k++)
 	{
 		char filename[100];

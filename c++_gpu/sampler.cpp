@@ -175,11 +175,13 @@ void Gibbs_uniGaussian_fm(
 		float entry_last = 0;
 		Matrix mean1 = extract_matrix_from_tensor(mean_tensor, i);
 
+		Matrix data = extract_matrix_from_tensor(tensor_reshape, i);
+
 		for(int d=0; d<d_factor; d++)
 		{
 			//== prepare
 			float x = fm.get_element(i, d);
-			Matrix data = extract_matrix_from_tensor(tensor_reshape, i);
+			//Matrix data = extract_matrix_from_tensor(tensor_reshape, i);
 
 			//Array array = extract_array_from_matrix(fm, i);
 			//Matrix mean1 = cal_tensordot(array, coef_tensor_reshape);
@@ -225,13 +227,14 @@ void Gibbs_uniGaussian_fm(
 
 
 			//==##== collector ==##==
-			data.release();
+			//data.release();
 			coef.release();
 			temp.release();
 		}
 
 		//==##== collector ==##==
 		mean1.release();
+		data.release();
 
 	}
 
@@ -262,11 +265,13 @@ void Gibbs_uniGaussian_Beta(
 		float beta_last = 0;
 		Array mean1 = extract_array_from_matrix(mean_matrix, d);
 
+		Array data = extract_array_from_matrix(U1_reshape, d);
+
 		for(int s=0; s<d_snp; s++)
 		{
 			//== prepare
 			float x = fm.get_element(d, s);
-			Array data = extract_array_from_matrix(U1_reshape, d);
+			//Array data = extract_array_from_matrix(U1_reshape, d);
 
 			if(s == 0)
 			{
@@ -310,14 +315,14 @@ void Gibbs_uniGaussian_Beta(
 
 
 			//==##== collector ==##==
-			data.release();
+			//data.release();
 			coef.release();
 			temp.release();
 		}
 
-
 		//==##== collector ==##==
 		mean1.release();
+		data.release();
 
 	}
 

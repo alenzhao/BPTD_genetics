@@ -19,6 +19,9 @@ typedef struct matrixSize
 
 
 
+void gpu_saxpy_array(float *, float *, int, float);
+
+void gpu_array_multion(int, float *, float *);
 
 void gpu_cal_matrixmul(float *, float *, float *, sMatrixSize &);
 

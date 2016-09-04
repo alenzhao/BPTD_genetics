@@ -379,6 +379,21 @@ public:
 		return;
 	}
 
+	void init(int length1, int length2, int length3, float * data)
+	{
+		dimension1 = length1;
+		dimension2 = length2;
+		dimension3 = length3;
+		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
+
+		int amount = dimension1*dimension2*dimension3;
+		for(int i=0; i<amount; i++)
+		{
+			tensor[i] = data[i];
+		}
+		return;
+	}
+
 	// used for loading data, since we might use other containers to load data first of all
 	void init(vector<vector<vector<float>>> & container)
 	{
@@ -571,4 +586,5 @@ Matrix extract_matrix_from_tensor(Tensor, int);
 #endif
 
 // end of utility.h
+
 
