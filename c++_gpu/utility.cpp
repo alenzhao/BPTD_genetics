@@ -12,7 +12,7 @@ Thanks for coming! I know you will use some of my as utilities.
 #include <assert.h>
 
 #include "utility.h"
-#include "utility_gpu.cuh"
+#include "utility_gpu.h"
 
 
 
@@ -32,25 +32,36 @@ using namespace std;
 //	Matrix cal_matrixsubtract(Matrix, Matrix);
 //	Matrix cal_matrixsubtract(Matrix, float);
 //	Tensor cal_tensorsubtract(Tensor, Tensor);
-int indicator_GPU_saxpy = 0;
+int indicator_GPU_saxpy = 0;								// NOTE: this seems not helping
 
 // for:
 //	void cal_arraymultion(Array, Array);
 //	void cal_matrixmultion(Matrix, Matrix);
 //	void cal_tensormultion(Tensor, Tensor);
 //	Tensor cal_tensormultiply(Tensor, Tensor);
-int indicator_GPU_multion = 0;
+int indicator_GPU_multion = 0;								// NOTE: this seems not helping
 
 // for:
 //	Matrix cal_matrixmul(Matrix, Matrix);
-int indicator_GPU_matrixmul = 0;
+int indicator_GPU_matrixmul = 1;							// NOTE: this helps for large dataset
+
+// for:
+//	Tensor cal_tensorouter(Matrix, Matrix);
+int indicator_GPU_tensorouter = 0;							// NOTE: this helps !!!
+															// NOTE: () is too large for GPU, so we won't use this with GPU
+
+// for:
+//	Tensor cal_tensor_innerprod(Matrix matrix1, Matrix matrix2, Matrix matrix3)
+int indicator_GPU_tensor_innerprod = 1;						// NOTE: this helps !!!
 
 
 
 
 
-
-
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -116,8 +127,7 @@ Tensor cal_tensoradd_multicoef( float coef1, Tensor tensor1, float coef2, Tensor
 	int dimension2 = tensor1.get_dimension2();
 	int dimension3 = tensor1.get_dimension3();
 
-	float temp = 0;
-	tensor.init(dimension1, dimension2, dimension3, temp);
+	tensor.init(dimension1, dimension2, dimension3);		// NOTE: this will automatically set all as 0
 
 	if(!indicator_GPU_saxpy)						// CPU code
 	{
@@ -135,7 +145,7 @@ Tensor cal_tensoradd_multicoef( float coef1, Tensor tensor1, float coef2, Tensor
 	}
 	else 											// GPU code
 	{
-		float * pointer_tensor = tensor.get_tensor();
+		float * pointer_tensor = tensor.get_tensor();		// NOTE: tensor has been set to 0, in init
 		float * pointer_tensor1 = tensor1.get_tensor();
 		float * pointer_tensor2 = tensor2.get_tensor();
 		gpu_saxpy_array(pointer_tensor, pointer_tensor1, dimension1*dimension2*dimension3, coef1);
@@ -145,6 +155,13 @@ Tensor cal_tensoradd_multicoef( float coef1, Tensor tensor1, float coef2, Tensor
 	return tensor;
 }
 
+
+
+
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -314,6 +331,13 @@ Tensor cal_tensorsubtract(Tensor tensor1, Tensor tensor2)
 
 
 
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+
+
+
 //  element-wise product, in place on Array array1
 void cal_arraymultion(Array array1, Array array2)
 {
@@ -436,6 +460,7 @@ Tensor cal_tensormultiply(Tensor tensor1, Tensor tensor2)
 		int dimension2 = tensor1.get_dimension2();
 		int dimension3 = tensor1.get_dimension3();
 		int dimension = dimension1 * dimension2 * dimension3;
+
 		float * pointer_tensor1 = tensor1.get_tensor();
 		tensor.init(dimension1, dimension2, dimension3, pointer_tensor1);
 
@@ -449,6 +474,11 @@ Tensor cal_tensormultiply(Tensor tensor1, Tensor tensor2)
 }
 
 
+
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -499,27 +529,80 @@ Matrix cal_matrixmul(Matrix matrix1, Matrix matrix2)
 
 
 
-// make Matrix matrix1 (d1, d2) and Matrix matrix2 (d3, d2) into a Tensor result (d1, d3, d2)
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+
+
+
+// make Matrix matrix1 (d1, d2) and Matrix matrix2 (d3, d2) into a Tensor tensor (d1, d3, d2)
 Tensor cal_tensorouter(Matrix matrix1, Matrix matrix2)
 {
-	Tensor result;
+	Tensor tensor;
 	int dimension1 = matrix1.get_dimension1();
 	int dimension2 = matrix2.get_dimension1();
 	int dimension3 = matrix1.get_dimension2();
-	result.init(dimension1, dimension2, dimension3);
+	tensor.init(dimension1, dimension2, dimension3);
 
-	for(int i=0; i<dimension1; i++)
+	if(!indicator_GPU_tensorouter)
 	{
-		for(int j=0; j<dimension2; j++)
+		for(int i=0; i<dimension1; i++)
 		{
-			for(int d=0; d<dimension3; d++)
+			for(int j=0; j<dimension2; j++)
 			{
-				result.set_element(i, j, d, matrix1.get_element(i, d) * matrix2.get_element(j ,d));
+				for(int d=0; d<dimension3; d++)
+				{
+					tensor.set_element(i, j, d, matrix1.get_element(i, d) * matrix2.get_element(j, d));
+				}
 			}
 		}
 	}
-	return result;
+	else
+	{
+		float * pointer_matrix1 = matrix1.get_matrix();
+		float * pointer_matrix2 = matrix2.get_matrix();
+		float * pointer_tensor = tensor.get_tensor();
+		gpu_cal_tensorouter(pointer_matrix1, pointer_matrix2, pointer_tensor, dimension1, dimension2, dimension3);
+	}
+
+	return tensor;
 }
+
+
+
+
+// make Matrix matrix1 (d1, d2) and Matrix matrix2 (d3, d2) into a Tensor tensor (d3, d1, d2)
+// since the dimension of the tensor for (400, 450, 21150) tensor, we won't use GPU for this routine
+// NOTE: this routine currently needs 87.411926 secs for the (400, 450, 21150) matrix, which can be further improved
+Tensor cal_tensorouter_reshape(Matrix matrix1, Matrix matrix2)
+{
+	Tensor tensor;
+	int dimension1 = matrix1.get_dimension2();
+	int dimension2 = matrix1.get_dimension1();
+	int dimension3 = matrix2.get_dimension1();
+	tensor.init(dimension1, dimension2, dimension3);
+
+	for(int d=0; d<dimension1; d++)
+	{
+		for(int i=0; i<dimension2; i++)
+		{
+			for(int j=0; j<dimension3; j++)
+			{
+				tensor.set_element(d, i, j, matrix1.get_element(i, d) * matrix2.get_element(j, d));
+			}
+		}
+	}
+
+	return tensor;
+}
+
+
+
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -533,24 +616,38 @@ Tensor cal_tensor_innerprod(Matrix matrix1, Matrix matrix2, Matrix matrix3)
 	int d_factor = matrix1.get_dimension2();
 	tensor.init(dimension1, dimension2, dimension3);
 
-	for(int k=0; k<dimension1; k++)
+	if(!indicator_GPU_tensor_innerprod)
 	{
-		for(int i=0; i<dimension2; i++)
+		for(int k=0; k<dimension1; k++)
 		{
-			for(int j=0; j<dimension3; j++)
+			for(int i=0; i<dimension2; i++)
 			{
-				float value = 0;
-				for(int d=0; d<d_factor; d++)
+				for(int j=0; j<dimension3; j++)
 				{
-					value += matrix1.get_element(k, d) * matrix2.get_element(i, d) * matrix3.get_element(j, d);
+					float value = 0;
+					for(int d=0; d<d_factor; d++)
+					{
+						value += matrix1.get_element(k, d) * matrix2.get_element(i, d) * matrix3.get_element(j, d);
+					}
+					tensor.set_element(k, i, j, value);
 				}
-				tensor.set_element(k, i, j, value);
 			}
 		}
+	}
+	else
+	{
+		float * pointer_matrix1 = matrix1.get_matrix();
+		float * pointer_matrix2 = matrix2.get_matrix();
+		float * pointer_matrix3 = matrix3.get_matrix();
+		float * pointer_tensor = tensor.get_tensor();
+
+		gpu_cal_tensor_innerprod(pointer_matrix1, pointer_matrix2, pointer_matrix3, pointer_tensor, dimension1, dimension2, dimension3, d_factor);
 	}
 
 	return tensor;
 }
+
+
 
 
 
@@ -578,6 +675,13 @@ Matrix cal_tensordot(Array array, Tensor tensor)
 
 	return matrix;
 }
+
+
+
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -624,6 +728,7 @@ Tensor op_tensor_reshape(Tensor tensor, int pos1, int pos2, int pos3)
 
 	result.init(dimension1, dimension2, dimension3);
 
+
 	for(int i=0; i<dimension1; i++)
 	{
 		for(int j=0; j<dimension2; j++)
@@ -663,10 +768,16 @@ Tensor op_tensor_reshape(Tensor tensor, int pos1, int pos2, int pos3)
 		}
 	}
 
+
 	return result;
 }
 
 
+
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -686,13 +797,13 @@ Array extract_array_from_matrix(Matrix matrix, int ind)
 
 
 
-Matrix extract_matrix_from_tensor(Tensor tensor, int ind)
+Matrix extract_matrix_from_tensor(Tensor tensor, long int ind)
 {
 	Matrix matrix;
-	int dimension2 = tensor.get_dimension2();
-	int dimension3 = tensor.get_dimension3();
+	long int dimension2 = tensor.get_dimension2();
+	long int dimension3 = tensor.get_dimension3();
 
-	int shift = ind * dimension2 * dimension3;
+	long int shift = ind * dimension2 * dimension3;
 	float * pointer = tensor.get_tensor();
 	matrix.init( dimension2, dimension3, (pointer+shift) );
 

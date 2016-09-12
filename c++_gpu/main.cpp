@@ -81,8 +81,8 @@ int main()
 
 
 	//==== data loading, and data preparation
-	//data_load_simu()
-	data_load_real();
+	data_load_simu();
+	//data_load_real();
 	loglike_init();
 
 
@@ -113,15 +113,20 @@ int main()
 
 
 		//==== sample all
-		sampler_subT(lamb);
-		sampler_factor(lamb, mu, lamb);
-		sampler_precision(alpha0, beta0);
+		//sampler_subT(lamb);
+		//sampler_factor(lamb, mu, lamb);
+		//sampler_precision(alpha0, beta0);
 
 
 
+
+		/*
 		//==== cal loglike  --> TODO: probably call this several iterations once
 		loglike_cal(mu, lamb, alpha0, beta0);
 		cout << "[@@] total loglike after this iteration: " << loglike_total.back() << endl;
+		*/
+
+
 
 
 
@@ -135,8 +140,9 @@ int main()
 
 
 	//==== save the learned model
-	data_save();
-	loglike_save();
+	// TODO: remember to save the data later on !!!
+	//data_save();
+	//loglike_save();
 
 
 

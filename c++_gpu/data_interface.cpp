@@ -159,50 +159,83 @@ void data_load_simu()
 	cout << "loading the simu data..." << endl;
 
 
-	//==========================================
-	//==== load parameters, init
-	char filename[100];
 
-	//==== matrix
-	//== U1
-	sprintf(filename, "../data_simu/U1.txt");
-	load_matrix(U1, filename);
-	//== V1
-	sprintf(filename, "../data_simu/V1.txt");
-	load_matrix(V1, filename);
-	//== T1
-	sprintf(filename, "../data_simu/T1.txt");
-	load_matrix(T1, filename);
-	//== U2
-	sprintf(filename, "../data_simu/U2.txt");
-	load_matrix(U2, filename);
-	//== V2
-	sprintf(filename, "../data_simu/V2.txt");
-	load_matrix(V2, filename);
-	//== T2
-	sprintf(filename, "../data_simu/T2.txt");
-	load_matrix(T2, filename);
-	//== Beta
-	sprintf(filename, "../data_simu/Beta.txt");
-	load_matrix(Beta, filename);
+	// NOTE: use fake data (to test) or not?
+	int indicator_real = 0;
+	if(indicator_real)
+	{
+		cout << "--> loading the real simu data..." << endl;
 
-	//==== tensor
-	//== Y1
-	sprintf(filename, "../data_simu/Y1.txt");
-	load_tensor(Y1, filename);
-	//== Y2
-	sprintf(filename, "../data_simu/Y2.txt");
-	load_tensor(Y2, filename);
+		//==========================================
+		//==== load parameters, init
+		char filename[100];
+
+		//==== matrix
+		//== U1
+		sprintf(filename, "../data_simu/U1.txt");
+		load_matrix(U1, filename);
+		//== V1
+		sprintf(filename, "../data_simu/V1.txt");
+		load_matrix(V1, filename);
+		//== T1
+		sprintf(filename, "../data_simu/T1.txt");
+		load_matrix(T1, filename);
+		//== U2
+		sprintf(filename, "../data_simu/U2.txt");
+		load_matrix(U2, filename);
+		//== V2
+		sprintf(filename, "../data_simu/V2.txt");
+		load_matrix(V2, filename);
+		//== T2
+		sprintf(filename, "../data_simu/T2.txt");
+		load_matrix(T2, filename);
+		//== Beta
+		sprintf(filename, "../data_simu/Beta.txt");
+		load_matrix(Beta, filename);
+
+		//==== tensor
+		//== Y1
+		sprintf(filename, "../data_simu/Y1.txt");
+		load_tensor(Y1, filename);
+		//== Y2
+		sprintf(filename, "../data_simu/Y2.txt");
+		load_tensor(Y2, filename);
 
 
-	//==========================================
-	//==== load data
-	//== X
-	sprintf(filename, "../data_simu/X.txt");
-	load_matrix(X, filename);
-	//== Y
-	sprintf(filename, "../data_simu/Y.txt");
-	load_tensor(Y, filename);
+		//==========================================
+		//==== load data
+		//== X
+		sprintf(filename, "../data_simu/X.txt");
+		load_matrix(X, filename);
+		//== Y
+		sprintf(filename, "../data_simu/Y.txt");
+		load_tensor(Y, filename);
+	}
+	else
+	{
+		cout << "--> loading the fake simu data..." << endl;
+
+		K = 33;
+		I = 450;
+		J = 21150;
+		S = 824113;
+		D1 = 400;
+		D2 = 400;
+
+		//==== matrix
+		U1.init(I, D1, 1.1);
+		V1.init(J, D1, 1.1);
+		T1.init(K, D1, 1.1);
+		U2.init(I, D2, 1.1);
+		V2.init(J, D2, 1.1);
+		T2.init(K, D2, 1.1);
+		Beta.init(D1, S, 1.1);
+		Y1.init(K, I, J, 1.1);
+		Y2.init(K, I, J, 1.1);
+		X.init(I, S, 1.1);
+		Y.init(K, I, J, 1.1);
+	}
+
 
 
 	//==========================================
@@ -297,8 +330,11 @@ void data_load_real()
 
 	// Y (dataset), markerset
 	Y.init(K, I, J);
+	/*
 	float temp = 0;
 	markerset.init(K, I, J, temp);
+	*/
+	markerset.init(K, I, J);							// NOTE: this already init all elements as 0
 	for(int k=0; k<K; k++)
 	{
 		char filename[100];

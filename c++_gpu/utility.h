@@ -39,10 +39,15 @@ public:
 		dimension = length;
 		array = (float *)calloc( length, sizeof(float) );
 
+		// so ugly below:
+		/*
 		for(int i=0; i<length; i++)
 		{
 			array[i] = data[i];
 		}
+		*/
+		memcpy( array, data, length*sizeof(float) );
+
 		return;
 	}
 
@@ -171,10 +176,15 @@ public:
 		matrix = (float *)calloc( length1 * length2, sizeof(float) );
 
 		int amount = dimension1*dimension2;
+		// so ugly below:
+		/*
 		for(int i=0; i<amount; i++)
 		{
 			matrix[i] = data[i];
 		}
+		*/
+		memcpy( matrix, data, amount*sizeof(float) );
+
 		return;
 	}
 
@@ -348,30 +358,32 @@ public:
 //================
 class Tensor
 {
-	int dimension1;
-	int dimension2;
-	int dimension3;
+	long int dimension1;
+	long int dimension2;
+	long int dimension3;
 	float * tensor;
 
 public:
-	void init(int length1, int length2, int length3)
+	void init(long int length1, long int length2, long int length3)
 	{
 		dimension1 = length1;
 		dimension2 = length2;
 		dimension3 = length3;
-		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
+		long int dimension = length1 * length2 * length3;
+		tensor = (float *)calloc( dimension, sizeof(float) );
 		return;
 	}
 
-	void init(int length1, int length2, int length3, float value)
+	void init(long int length1, long int length2, long int length3, float value)
 	{
 		dimension1 = length1;
 		dimension2 = length2;
 		dimension3 = length3;
-		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
+		long int dimension = length1 * length2 * length3;
+		tensor = (float *)calloc( dimension, sizeof(float) );
 
-		int amount = dimension1*dimension2*dimension3;
-		for(int i=0; i<amount; i++)
+		long int amount = dimension1*dimension2*dimension3;
+		for(long int i=0; i<amount; i++)
 		{
 			tensor[i] = value;
 		}
@@ -379,18 +391,24 @@ public:
 		return;
 	}
 
-	void init(int length1, int length2, int length3, float * data)
+	void init(long int length1, long int length2, long int length3, float * data)
 	{
 		dimension1 = length1;
 		dimension2 = length2;
 		dimension3 = length3;
-		tensor = (float *)calloc( length1 * length2 * length3, sizeof(float) );
+		long int dimension = length1 * length2 * length3;
+		tensor = (float *)calloc( dimension, sizeof(float) );
 
-		int amount = dimension1*dimension2*dimension3;
+		long int amount = dimension1*dimension2*dimension3;
+		// so ugly below:
+		/*
 		for(int i=0; i<amount; i++)
 		{
 			tensor[i] = data[i];
 		}
+		*/
+		memcpy( tensor, data, amount*sizeof(float) );
+
 		return;
 	}
 
@@ -400,14 +418,15 @@ public:
 		dimension1 = container.size();
 		dimension2 = (container.at(0)).size();
 		dimension3 = ((container.at(0)).at(0)).size();
-		tensor = (float *)calloc( dimension1 * dimension2 * dimension3, sizeof(float) );
+		long int dimension = dimension1 * dimension2 * dimension3;
+		tensor = (float *)calloc( dimension, sizeof(float) );
 
-		int count = 0;
-		for(int i=0; i<dimension1; i++)
+		long int count = 0;
+		for(long int i=0; i<dimension1; i++)
 		{
-			for(int j=0; j<dimension2; j++)
+			for(long int j=0; j<dimension2; j++)
 			{
-				for(int d=0; d<dimension3; d++)
+				for(long int d=0; d<dimension3; d++)
 				{
 					float value = ((container.at(i)).at(j)).at(d);
 					tensor[count] = value;
@@ -425,17 +444,17 @@ public:
 		return;
 	}
 
-	int get_dimension1()
+	long int get_dimension1()
 	{
 		return dimension1;
 	}
 
-	int get_dimension2()
+	long int get_dimension2()
 	{
 		return dimension2;
 	}
 
-	int get_dimension3()
+	long int get_dimension3()
 	{
 		return dimension3;
 	}
@@ -446,15 +465,21 @@ public:
 		return tensor;
 	}
 
-	float get_element(int ind1, int ind2, int ind3)
+	float * get_tensor_at(long int i)
 	{
-		int index = ind1 * dimension2 * dimension3 + ind2 * dimension3 + ind3;
+		long int shift = i * dimension2 * dimension3;
+		return (tensor+shift);
+	}
+
+	float get_element(long int ind1, long int ind2, long int ind3)
+	{
+		long int index = ind1 * dimension2 * dimension3 + ind2 * dimension3 + ind3;
 		return tensor[index];
 	}
 
-	void set_element(int ind1, int ind2, int ind3, float value)
+	void set_element(long int ind1, long int ind2, long int ind3, float value)
 	{
-		int index = ind1 * dimension2 * dimension3 + ind2 * dimension3 + ind3;
+		long int index = ind1 * dimension2 * dimension3 + ind2 * dimension3 + ind3;
 		tensor[index] = value;
 		return;
 	}
@@ -472,7 +497,7 @@ public:
 	float sum()
 	{
 		float result = 0;
-		for(int i=0; i<dimension1*dimension2*dimension3; i++)
+		for(long int i=0; i<dimension1*dimension2*dimension3; i++)
 		{
 			result += tensor[i];
 		}
@@ -480,11 +505,11 @@ public:
 	}
 
 	// SOS for one layer
-	float sum_of_square(int ind)
+	float sum_of_square(long int ind)
 	{
 		float result = 0;
-		int start = ind * dimension2 * dimension3;
-		for(int i=0; i<dimension2*dimension3; i++)
+		long int start = ind * dimension2 * dimension3;
+		for(long int i=0; i<dimension2*dimension3; i++)
 		{
 			result += pow(tensor[start + i], 2.0);
 		}
@@ -494,7 +519,7 @@ public:
 	// raise all elements to the power of float exp
 	void power(float exp)
 	{
-		for(int i=0; i<dimension1*dimension2*dimension3; i++)
+		for(long int i=0; i<dimension1*dimension2*dimension3; i++)
 		{
 			tensor[i] = pow(tensor[i], exp);
 		}
@@ -519,14 +544,14 @@ public:
 		fwrite(buf, sizeof(char), strlen(buf), file_out);
 		fwrite("\n", sizeof(char), 1, file_out);
 
-		for(int k=0; k<dimension1; k++)
+		for(long int k=0; k<dimension1; k++)
 		{
-			for(int i=0; i<dimension2; i++)
+			for(long int i=0; i<dimension2; i++)
 			{
-				int start = k * dimension2 * dimension3 + i * dimension3;
-				for(int j=0; j<dimension3; j++)
+				long int start = k * dimension2 * dimension3 + i * dimension3;
+				for(long int j=0; j<dimension3; j++)
 				{
-					int index = start + j;
+					long int index = start + j;
 					float value = tensor[index];
 					char buf[1024];
 					sprintf(buf, "%f\t", value);
@@ -571,14 +596,15 @@ Tensor cal_tensormultiply(Tensor, Tensor);
 Matrix cal_matrixmul(Matrix, Matrix);
 
 Tensor cal_tensorouter(Matrix, Matrix);
+Tensor cal_tensorouter_reshape(Matrix, Matrix);
 Tensor cal_tensor_innerprod(Matrix, Matrix, Matrix);
-Matrix cal_tensordot(Array, Tensor);
+Matrix cal_tensordot(Array, Tensor);								// no use any more
 
 Matrix op_matrix_rotate(Matrix);
 Tensor op_tensor_reshape(Tensor, int, int, int);
 
 Array extract_array_from_matrix(Matrix, int);
-Matrix extract_matrix_from_tensor(Tensor, int);
+Matrix extract_matrix_from_tensor(Tensor, long int);
 
 
 

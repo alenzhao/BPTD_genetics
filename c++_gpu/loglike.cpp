@@ -7,6 +7,8 @@ Hi there, I will calculate the loglikelihood during the training.
 
 #include <iostream>
 #include <math.h>       /* sqrt */
+#include <sys/time.h>
+#include <time.h>       /* clock_t, clock, CLOCKS_PER_SEC */
 #include "utility.h"
 #include "global.h"
 
@@ -149,6 +151,21 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	float loglike;
 
 
+
+
+	// DEBUG
+	struct timeval time_start;
+	struct timeval time_end;
+	double time_diff;
+
+
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
 	//==== loglike_data
 	Tensor mean = cal_tensoradd_multicoef(1, Y1, 1, Y2);
 	loglike = loglike_gaussian_data(Y, mean);
@@ -156,6 +173,20 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	loglike_cumu += loglike;
 	//==##== collector ==##==
 	mean.release();
+
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
 
 	//==== loglike_Y1
 	mean = cal_tensor_innerprod(T1, U1, V1);
@@ -165,6 +196,22 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	//==##== collector ==##==
 	mean.release();
 
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
+
 	//==== loglike_Y2
 	mean = cal_tensor_innerprod(T2, U2, V2);
 	loglike = loglike_gaussian_tensor(Y2, mean, lambda0);
@@ -172,6 +219,20 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	loglike_cumu += loglike;
 	//==##== collector ==##==
 	mean.release();
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
 
 	//==== loglike_U1
 	Matrix Beta_reshape = op_matrix_rotate(Beta);
@@ -183,40 +244,167 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	Beta_reshape.release();
 	mean_matrix.release();
 
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
 	//==== loglike_V1
 	loglike = loglike_gaussian_uni(V1, mu0, lambda0);
 	loglike_V1.push_back(loglike);
 	loglike_cumu += loglike;
+
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
 
 	//==== loglike_T1
 	loglike = loglike_gaussian_uni(T1, mu0, lambda0);
 	loglike_T1.push_back(loglike);
 	loglike_cumu += loglike;
 
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
+
 	//==== loglike_U2
 	loglike = loglike_gaussian_uni(U2, mu0, lambda0);
 	loglike_U2.push_back(loglike);
 	loglike_cumu += loglike;
+
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
 
 	//==== loglike_V2
 	loglike = loglike_gaussian_uni(V2, mu0, lambda0);
 	loglike_V2.push_back(loglike);
 	loglike_cumu += loglike;
 
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
+
 	//==== loglike_T2
 	loglike = loglike_gaussian_uni(T2, mu0, lambda0);
 	loglike_T2.push_back(loglike);
 	loglike_cumu += loglike;
+
+
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
+
 
 	//==== loglike_Beta
 	loglike = loglike_gaussian_uni(Beta, mu0, lambda0);
 	loglike_Beta.push_back(loglike);
 	loglike_cumu += loglike;
 
+
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+
+	//==== timer starts
+	gettimeofday(&time_start, NULL);
+
+
+
 	//==== loglike_alpha
 	loglike = loglike_gamma(alpha, alpha0, beta0);
 	loglike_alpha.push_back(loglike);
 	loglike_cumu += loglike;
+
+
+
+
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("time used is %f seconds.\n", time_diff);
+	cout << "####" << endl;
+
+
+
+
+
+
+
+
 
 
 	//==== loglike_total
