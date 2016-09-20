@@ -161,7 +161,7 @@ void data_load_simu()
 
 
 	// NOTE: use fake data (to test) or not?
-	int indicator_real = 0;
+	int indicator_real = 1;
 	if(indicator_real)
 	{
 		cout << "--> loading the real simu data..." << endl;
@@ -397,6 +397,13 @@ void data_load_real()
 
 
 
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+//=============/=============/=============/=============/=============/=============/=============/=============
+
+
+
 
 // save the learned model
 // where: "../result/"
@@ -495,6 +502,51 @@ void loglike_save()
 {
 	char filename[] = "../result/loglike_total.txt";
 	save_vector(loglike_total, filename);
+
+	return;
+}
+
+
+
+void save_vector_online(vector<float> & vec, char * filename)
+{
+	int count = vec.size();
+	float loglike = vec.back();
+
+	FILE * file_out;
+	if(count == 1)
+	{
+		file_out = fopen(filename, "w+");
+		if(file_out == NULL)
+		{
+		    fputs("File error\n", stderr); exit(1);
+		}
+	}
+	else
+	{
+		file_out = fopen(filename, "a+");
+		if(file_out == NULL)
+		{
+		    fputs("File error\n", stderr); exit(1);
+		}
+	}
+
+	char buf[1024];
+	sprintf(buf, "%f\n", loglike);
+	fwrite(buf, sizeof(char), strlen(buf), file_out);
+
+	fclose(file_out);
+
+	return;
+}
+
+
+
+// save loglike in an online fashion
+void loglike_save_online()
+{
+	char filename[] = "../result/loglike_total_online.txt";
+	save_vector_online(loglike_total, filename);
 
 	return;
 }

@@ -742,6 +742,7 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 
 
 
+
 	//############################################
 	//############################################
 	//############################################
@@ -920,6 +921,9 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 
 
 
+
+
+
 	//==== V1
 	cout << "@@@@ sample V1..." << endl;
 
@@ -1080,6 +1084,8 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//############################################
 	//############################################
 	//############################################
+
+
 
 
 
@@ -1250,7 +1256,7 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 
 
 
-	// above: Beta, U1, V1, T1
+	// above: Beta, U1, V1, T1 (with timer)
 	//############################################
 	//############################################
 	//############################################
@@ -1259,7 +1265,7 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	//############################################
 	//############################################
 	//############################################
-	// above: U2, V2, T2
+	// above: U2, V2, T2 (without timer)
 
 
 
@@ -1295,7 +1301,6 @@ void sampler_factor(float lambda0, float mu1, float lambda1)
 	mean_tensor3.release();
 	//== sampling
 	Gibbs_uniGaussian_fm_parallel(lambda0, lambda1, I, D2, U2, Y2_reshape3, coef_tensor3, lambda_list3, mu_matrix3, mean_tensor_reshape3);
-
 
 	//==##== collector ==##==
 	Y2_reshape3.release();

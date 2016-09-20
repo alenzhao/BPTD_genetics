@@ -26,6 +26,7 @@ void data_save();
 // loglike:
 void loglike_init();
 void loglike_save();
+void loglike_save_online();
 
 
 

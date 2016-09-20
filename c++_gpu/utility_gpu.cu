@@ -765,6 +765,8 @@ void gpu_Gibbs_uniGaussian_fm(
 
 
 
+//=============/=============/=============/=============/=============/=============/=============/=============
+
 
 
 //==== some sub-routines for "gpu_Gibbs_uniGaussian_fm_parallel"

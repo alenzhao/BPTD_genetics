@@ -113,18 +113,18 @@ int main()
 
 
 		//==== sample all
-		//sampler_subT(lamb);
-		//sampler_factor(lamb, mu, lamb);
-		//sampler_precision(alpha0, beta0);
+		sampler_subT(lamb);
+		sampler_factor(lamb, mu, lamb);
+		sampler_precision(alpha0, beta0);
 
 
 
 
-		/*
+
 		//==== cal loglike  --> TODO: probably call this several iterations once
 		loglike_cal(mu, lamb, alpha0, beta0);
-		cout << "[@@] total loglike after this iteration: " << loglike_total.back() << endl;
-		*/
+		cout << "[@@##@@] total loglike after this iteration: " << loglike_total.back() << endl;
+		loglike_save_online();
 
 
 
@@ -134,15 +134,31 @@ int main()
 		gettimeofday(&time_end, NULL);
 		time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
 		printf("time used per iteration is %f seconds.\n", time_diff);
-
+		cout << "####" << endl;
 	}
 
 
 
+
+
+
 	//==== save the learned model
-	// TODO: remember to save the data later on !!!
-	//data_save();
-	//loglike_save();
+	//==== timer starts
+	struct timeval time_start;
+	struct timeval time_end;
+	double time_diff;
+	gettimeofday(&time_start, NULL);
+
+	data_save();
+	loglike_save();
+
+	//==== timer ends
+	gettimeofday(&time_end, NULL);
+	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
+	printf("saving model and loglike uses time %f seconds.\n", time_diff);
+
+
+
 
 
 

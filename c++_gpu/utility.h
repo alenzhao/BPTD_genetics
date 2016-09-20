@@ -597,6 +597,7 @@ Matrix cal_matrixmul(Matrix, Matrix);
 
 Tensor cal_tensorouter(Matrix, Matrix);
 Tensor cal_tensorouter_reshape(Matrix, Matrix);
+
 Tensor cal_tensor_innerprod(Matrix, Matrix, Matrix);
 Matrix cal_tensordot(Array, Tensor);								// no use any more
 

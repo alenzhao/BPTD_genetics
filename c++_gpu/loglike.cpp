@@ -152,7 +152,6 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 
 
 
-
 	// DEBUG
 	struct timeval time_start;
 	struct timeval time_end;
@@ -160,6 +159,8 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 	//==== timer starts
@@ -181,6 +182,10 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
 	printf("time used is %f seconds.\n", time_diff);
 	cout << "####" << endl;
+
+
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -205,6 +210,9 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	cout << "####" << endl;
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
+
 
 
 	//==== timer starts
@@ -227,6 +235,9 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	printf("time used is %f seconds.\n", time_diff);
 	cout << "####" << endl;
 
+
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -253,6 +264,9 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	cout << "####" << endl;
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
+
 
 	//==== timer starts
 	gettimeofday(&time_start, NULL);
@@ -271,6 +285,9 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	printf("time used is %f seconds.\n", time_diff);
 	cout << "####" << endl;
 
+
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -292,10 +309,12 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	cout << "####" << endl;
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
+
 
 	//==== timer starts
 	gettimeofday(&time_start, NULL);
-
 
 
 	//==== loglike_U2
@@ -311,6 +330,9 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	printf("time used is %f seconds.\n", time_diff);
 	cout << "####" << endl;
 
+
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 	//==== timer starts
@@ -332,6 +354,9 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	cout << "####" << endl;
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
+
 
 	//==== timer starts
 	gettimeofday(&time_start, NULL);
@@ -345,7 +370,6 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 
 
 
-
 	//==== timer ends
 	gettimeofday(&time_end, NULL);
 	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
@@ -353,11 +377,12 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	cout << "####" << endl;
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 	//==== timer starts
 	gettimeofday(&time_start, NULL);
-
 
 
 
@@ -368,7 +393,6 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 
 
 
-
 	//==== timer ends
 	gettimeofday(&time_end, NULL);
 	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
@@ -376,6 +400,8 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 	cout << "####" << endl;
 
 
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 	//==== timer starts
@@ -391,7 +417,6 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 
 
 
-
 	//==== timer ends
 	gettimeofday(&time_end, NULL);
 	time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
@@ -401,7 +426,8 @@ void loglike_cal(float mu0, float lambda0, float alpha0, float beta0)
 
 
 
-
+	//=============/=============/=============/=============/=============/=============/=============/=============
+	//=============/=============/=============/=============/=============/=============/=============/=============
 
 
 

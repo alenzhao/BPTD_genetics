@@ -1,6 +1,6 @@
 /*
 
-Thanks for coming! I know you will use some of my as utilities.
+Thanks for coming! I know you will use some of mine as utilities.
 
 */
 
@@ -41,19 +41,31 @@ int indicator_GPU_saxpy = 0;								// NOTE: this seems not helping
 //	Tensor cal_tensormultiply(Tensor, Tensor);
 int indicator_GPU_multion = 0;								// NOTE: this seems not helping
 
+//@@ NOTE @@: the right way to use Saxpy and Multion is probably in-memory computing
+
+
 // for:
 //	Matrix cal_matrixmul(Matrix, Matrix);
 int indicator_GPU_matrixmul = 1;							// NOTE: this helps for large dataset
+
+//@@ NOTE @@: matrixmul always helps when the matrix is not too small
+
 
 // for:
 //	Tensor cal_tensorouter(Matrix, Matrix);
 int indicator_GPU_tensorouter = 0;							// NOTE: this helps !!!
 															// NOTE: () is too large for GPU, so we won't use this with GPU
 
+//@@ NOTE @@: outer product type computation is not so helpful with GPU; and here since we want to cache a super large one in memory, we do directly with CPU
+
+
 // for:
 //	Tensor cal_tensor_innerprod(Matrix matrix1, Matrix matrix2, Matrix matrix3)
 int indicator_GPU_tensor_innerprod = 1;						// NOTE: this helps !!!
 
+//@@ NOTE @@: inner product always involves lots multiplication with addition, so GPU is preferred
+
+
 
 
 
@@ -62,6 +74,7 @@ int indicator_GPU_tensor_innerprod = 1;						// NOTE: this helps !!!
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ add
 
 
 
@@ -162,6 +175,7 @@ Tensor cal_tensoradd_multicoef( float coef1, Tensor tensor1, float coef2, Tensor
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ subtract
 
 
 
@@ -284,7 +298,6 @@ Matrix cal_matrixsubtract(Matrix matrix1, float value)
 
 
 
-
 // subtract Tensor tensor2 from Tensor tensor1, and return results in Tensor tensor
 Tensor cal_tensorsubtract(Tensor tensor1, Tensor tensor2)
 {
@@ -335,6 +348,7 @@ Tensor cal_tensorsubtract(Tensor tensor1, Tensor tensor2)
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ multion
 
 
 
@@ -479,6 +493,8 @@ Tensor cal_tensormultiply(Tensor tensor1, Tensor tensor2)
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ matrixmul
+
 
 
 
@@ -533,6 +549,7 @@ Matrix cal_matrixmul(Matrix matrix1, Matrix matrix2)
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ tensorouter
 
 
 
@@ -572,7 +589,7 @@ Tensor cal_tensorouter(Matrix matrix1, Matrix matrix2)
 
 
 
-// make Matrix matrix1 (d1, d2) and Matrix matrix2 (d3, d2) into a Tensor tensor (d3, d1, d2)
+// make Matrix matrix1 (d1, d2) and Matrix matrix2 (d3, d2) into a Tensor tensor (d2, d1, d3)
 // since the dimension of the tensor for (400, 450, 21150) tensor, we won't use GPU for this routine
 // NOTE: this routine currently needs 87.411926 secs for the (400, 450, 21150) matrix, which can be further improved
 Tensor cal_tensorouter_reshape(Matrix matrix1, Matrix matrix2)
@@ -603,6 +620,7 @@ Tensor cal_tensorouter_reshape(Matrix matrix1, Matrix matrix2)
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ tensor inner product
 
 
 
@@ -682,6 +700,7 @@ Matrix cal_tensordot(Array array, Tensor tensor)
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ rotate
 
 
 
@@ -778,6 +797,7 @@ Tensor op_tensor_reshape(Tensor tensor, int pos1, int pos2, int pos3)
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
 //=============/=============/=============/=============/=============/=============/=============/=============
+//@@ down grade
 
 
 

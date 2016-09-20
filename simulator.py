@@ -22,6 +22,7 @@ U2 = []
 V2 = []
 T2 = []
 alpha = 1
+'''
 # NOTE: the following are the real scenario for chr22 and brain tensor
 K = 13
 I = 159
@@ -29,6 +30,17 @@ J = 585
 S = 14056				#S = 14056
 D1 = 40
 D2 = 40
+'''
+# NOTE: the following are for the whole-genome and all samples
+K = 33
+I = 450
+J = 21150
+S = 824113
+D1 = 400
+D2 = 400
+
+
+
 
 
 
@@ -114,6 +126,7 @@ def simu_Y2(lamb, mu1, lamb1):		# (work on global scale)
 
 
 
+
 def simu_alpha(alpha0, beta0):		# (work on global scale)
 	global alpha
 
@@ -149,7 +162,8 @@ if __name__ == "__main__":
 
 	print "this is simulator..."
 
-	##==== load X
+	'''
+	##==== load X (for brain and chr22)
 	list_indiv = np.load("./data_real/Individual_list.npy")
 
 	X = []
@@ -168,15 +182,42 @@ if __name__ == "__main__":
 
 	print "dosage matrix shape:",
 	print X.shape
+	'''
 
+	##==== load X (for whole genome and all samples)
+	list_indiv = []
+	file = open("./data_real/list_individuals.txt", 'r')
+	while 1:
+		line = (file.readline()).strip()
+		if not line:
+			break
 
+		individual = line
+		list_indiv.append(individual)
+	file.close()
+	list_indiv = np.array(list_indiv)
 
+	X = []
+	for indiv in list_indiv:
+		X.append([])
 
-	## TODO: debug
-	X_new = []
-	for i in range(len(X)):
-		X_new.append(X[i][:S])
-	X = np.array(X_new)
+		for j in range(22):
+			chr = j+1
+			file = open("../genotype_450_dosage_matrix_qc/chr" + str(chr) + "/SNP_dosage_" + indiv + ".txt", 'r')	## NOTE: on cluster
+			while 1:
+				line = (file.readline()).strip()
+				if not line:
+					break
+
+				dosage = float(line)
+				X[-1].append(dosage)
+			file.close()
+
+	X = np.array(X)
+
+	print "dosage matrix shape:",
+	print X.shape
+
 
 
 
