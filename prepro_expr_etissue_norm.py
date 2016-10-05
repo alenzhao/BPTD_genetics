@@ -8,11 +8,14 @@
 
 
 
-##=============/=============/=============/=============/=============/=============/=============/=============
-##=============/=============/=============/=============/=============/=============/=============/=============
-##=============/=============/=============/=============/=============/=============/=============/=============
-##=============/=============/=============/=============/=============/=============/=============/=============
 
+
+
+
+##=============/=============/=============/=============/=============/=============/=============/=============
+##=============/=============/=============/=============/=============/=============/=============/=============
+##=============/=============/=============/=============/=============/=============/=============/=============
+##=============/=============/=============/=============/=============/=============/=============/=============
 
 
 
@@ -31,6 +34,7 @@ import os
 import numpy as np
 from scipy import stats
 import scipy.stats as st
+import re
 
 
 
@@ -49,24 +53,19 @@ rpkm_min = 0.1			# TODO: see above
 
 
 
-##==================
+##===============
 ##==== sub-routines
-##==================
+##===============
 # get the "xxx-yyy" from "xxx-yyy-zzz-aaa-qqq", which is defined as the individual ID of the GTEx samples
+pattern_indiv = re.compile(r'^(\w)+([\-])(\w)+')
 def get_individual_id(s):
-	## naively find the second '-'
-	id = ''
-	count = 0
-	for i in range(len(s)):
-		if s[i] == '-':
-			count += 1
+	match = pattern_indiv.match(s)
+	if match:
+		return match.group()
+	else:
+		print "!!! no individual ID is found..."
+		return ""
 
-		if count == 2:
-			break
-
-		id += s[i]
-
-	return id
 
 
 
@@ -91,7 +90,38 @@ def check_null(l):
 
 
 
+
+
+
 if __name__ == '__main__':
+
+
+
+
+	"""
+	##===========#===========#===========#===========#===========#===========#===========#===========#===========
+	##===========#===========#===========#===========#===========#===========#===========#===========#===========
+	##==== NOTE: extra script for brain: brain tissues
+	list_tissue = []
+	file = open("./data_raw/list_tissue.txt", 'r')
+	while 1:
+		line = (file.readline()).strip()
+		if not line:
+			break
+
+		line = line.split('\t')
+		tissue = line[0]
+		list_tissue.append(tissue)
+	file.close()
+	list_tissue = np.array(list_tissue)
+	print "# of etissues,"
+	print len(list_tissue)
+	np.save("./data_prepared/Tissue_list", list_tissue)
+	##===========#===========#===========#===========#===========#===========#===========#===========#===========
+	##===========#===========#===========#===========#===========#===========#===========#===========#===========
+	"""
+
+
 
 
 
@@ -112,7 +142,7 @@ if __name__ == '__main__':
 
 
 	## sample_list
-	file = open("./data_raw/GTEx_Data_20150112_RNAseq_RNASeQCv1.1.8_gene_rpkm.gct_1_genotype", 'r')
+	file = open("./data_raw/GTEx_Analysis_v6p_RNA-seq_RNA-SeQCv1.1.8_gene_rpkm.gct_1_genotype", 'r')
 	sample_list = (((file.readline()).strip()).split('\t'))[1:]
 	file.close()
 
@@ -151,6 +181,7 @@ if __name__ == '__main__':
 			if individual not in rep_temp[tissue]:
 				eQTL_tissue[tissue].append(sample)
 				rep_temp[tissue][individual] = 1
+
 
 
 
@@ -199,7 +230,7 @@ if __name__ == '__main__':
 
 
 	# filter all the samples again
-	file = open("./data_raw/GTEx_Data_20150112_RNAseq_RNASeQCv1.1.8_gene_rpkm.gct_1_genotype", 'r')
+	file = open("./data_raw/GTEx_Analysis_v6p_RNA-seq_RNA-SeQCv1.1.8_gene_rpkm.gct_1_genotype", 'r')
 	list_sample = []
 	index_rep = {}
 	line = (file.readline()).strip()
@@ -244,7 +275,8 @@ if __name__ == '__main__':
 	print "now we are picking up a subset (or all) of all the genes..."
 	rep_gene_chr22 = {}
 	rep_gene_all = {}
-	file = open("./data_raw/gene_tss.txt", 'r')
+	rep_gene_xymt = {}
+	file = open("./data_raw/gene_tss_gencode.v19.v6p.txt", 'r')
 	while 1:
 		line = (file.readline()).strip()
 		if not line:
@@ -256,6 +288,8 @@ if __name__ == '__main__':
 		rep_gene_all[gene] = 1
 		if chr == '22':
 			rep_gene_chr22[gene] = 1
+		if chr == 'X' or chr == 'Y' or chr == 'MT':
+			rep_gene_xymt[gene] = 1
 	file.close()
 
 	Data_null = []
@@ -265,7 +299,9 @@ if __name__ == '__main__':
 		rpkm_list = Data[i]
 		if check_null(rpkm_list):
 			continue
-		if gene not in rep_gene_all:		# TODO: or whole gene
+		#if gene not in rep_gene_chr22:						# TODO: chr22, or whole gene
+		#	continue
+		if gene in rep_gene_xymt:							# NOTE: remove the X, Y, MT genes
 			continue
 		list_gene_final.append(gene)
 		Data_null.append(rpkm_list)

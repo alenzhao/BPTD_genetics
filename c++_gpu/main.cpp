@@ -99,7 +99,7 @@ int main()
 
 
 
-	int ITER = 1;						// TODO
+	int ITER = 10000;					// TODO
 	for(int i=0; i<ITER; i++)
 	{
 		cout << "now working on iter#" << i << endl;
@@ -120,12 +120,10 @@ int main()
 
 
 
-
 		//==== cal loglike  --> TODO: probably call this several iterations once
 		loglike_cal(mu, lamb, alpha0, beta0);
 		cout << "[@@##@@] total loglike after this iteration: " << loglike_total.back() << endl;
 		loglike_save_online();
-
 
 
 
@@ -135,8 +133,17 @@ int main()
 		time_diff = (double)(time_end.tv_sec-time_start.tv_sec) + (double)(time_end.tv_usec-time_start.tv_usec)/1000000;
 		printf("time used per iteration is %f seconds.\n", time_diff);
 		cout << "####" << endl;
-	}
 
+
+
+		//==== save the learned model every specified iterations
+		int data_save_every = 10;
+		if(i % data_save_every == 0)
+		{
+			data_save();
+			loglike_save();
+		}
+	}
 
 
 
@@ -169,4 +176,5 @@ int main()
 
 	return 0;
 }
+
 

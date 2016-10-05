@@ -170,6 +170,7 @@ void data_load_simu()
 		//==== load parameters, init
 		char filename[100];
 
+		/*
 		//==== matrix
 		//== U1
 		sprintf(filename, "../data_simu/U1.txt");
@@ -200,6 +201,49 @@ void data_load_simu()
 		//== Y2
 		sprintf(filename, "../data_simu/Y2.txt");
 		load_tensor(Y2, filename);
+		*/
+		//==== matrix
+		//== U1
+		sprintf(filename, "../data_simu_init/U1.txt");
+		load_matrix(U1, filename);
+		//== V1
+		sprintf(filename, "../data_simu_init/V1.txt");
+		load_matrix(V1, filename);
+		//== T1
+		sprintf(filename, "../data_simu_init/T1.txt");
+		load_matrix(T1, filename);
+		//== U2
+		sprintf(filename, "../data_simu_init/U2.txt");
+		load_matrix(U2, filename);
+		//== V2
+		sprintf(filename, "../data_simu_init/V2.txt");
+		load_matrix(V2, filename);
+		//== T2
+		sprintf(filename, "../data_simu_init/T2.txt");
+		load_matrix(T2, filename);
+		//== Beta
+		sprintf(filename, "../data_simu_init/Beta.txt");
+		load_matrix(Beta, filename);
+
+		//==== tensor
+		//== Y1
+		sprintf(filename, "../data_simu_init/Y1.txt");
+		load_tensor(Y1, filename);
+		//== Y2
+		sprintf(filename, "../data_simu_init/Y2.txt");
+		load_tensor(Y2, filename);
+
+
+		//==========================================
+		//==== fill in the dimensions
+		K = Y1.get_dimension1();
+		I = Y1.get_dimension2();
+		J = Y1.get_dimension3();
+		//
+		S = Beta.get_dimension2();
+		D1 = Beta.get_dimension1();
+		//
+		D2 = U2.get_dimension2();
 
 
 		//==========================================
@@ -207,9 +251,92 @@ void data_load_simu()
 		//== X
 		sprintf(filename, "../data_simu/X.txt");
 		load_matrix(X, filename);
+
+
+
 		//== Y
-		sprintf(filename, "../data_simu/Y.txt");
-		load_tensor(Y, filename);
+		int indicator_comp = 0;
+		if(indicator_comp)				// load complete Y
+		{
+			cout << "loading complete Y tensor..." << endl;
+			sprintf(filename, "../data_simu/Y.txt");
+			load_tensor(Y, filename);
+
+
+			//==========================================
+			//==== the others
+			int temp = 1;
+			markerset.init(K, I, J, temp);
+			N_element = int(markerset.sum());
+			alpha = 1.0;				// NOTE: need to manually set this
+			
+		}
+		else 							// load incomplete Y
+		{
+			cout << "loading incomplete Y tensor..." << endl;
+			// Y (dataset), markerset
+			Y.init(K, I, J);
+			/*
+			float temp = 0;
+			markerset.init(K, I, J, temp);
+			*/
+			markerset.init(K, I, J);							// NOTE: this already init all elements as 0
+			for(int k=0; k<K; k++)
+			{
+				char filename[100];
+				filename[0] = '\0';
+				strcat(filename, "../data_simu_init/Tensor_tissue_");
+				char tissue[10];
+				sprintf(tissue, "%d", k);
+				strcat(filename, tissue);
+				strcat(filename, ".txt");
+
+				char type[10] = "r";
+				filehandle file(filename, type);
+
+				long input_length = 1000000000;
+				char * line = (char *)malloc( sizeof(char) * input_length );
+				while(1)
+				{
+					int end = file.readline(line, input_length);
+					if(end)
+						break;
+
+					line_class line_obj(line);
+					line_obj.split_tab();
+
+					int index = atoi(line_obj.at(0));
+					vector<float> vec;
+					for(unsigned i=1; i<line_obj.size(); i++)		// NOTE: here we start from pos#1
+					{
+						char * pointer = line_obj.at(i);
+						//float value = stof(pointer);				// NOTE: there are double-range numbers
+						float value = stod(pointer);
+						vec.push_back(value);
+					}
+					line_obj.release();
+					for(int i=0; i<vec.size(); i++)
+					{
+						Y.set_element(k, index, i, vec.at(i));
+						markerset.set_element(k, index, i, 1);
+					}
+
+				}
+				free(line);
+				file.close();
+			}
+
+			cout << "Y and markerset shape:" << endl;
+			cout << "(" << Y.get_dimension1() << ", " << Y.get_dimension2() << ", " << Y.get_dimension3() << ")" << endl;
+			cout << "(" << markerset.get_dimension1() << ", " << markerset.get_dimension2() << ", " << markerset.get_dimension3() << ")" << endl;
+
+
+			//==========================================
+			//==== init others
+			alpha = 1.0;		// just random
+			N_element = int(markerset.sum());
+		}
+
 	}
 	else
 	{
@@ -234,28 +361,16 @@ void data_load_simu()
 		Y2.init(K, I, J, 1.1);
 		X.init(I, S, 1.1);
 		Y.init(K, I, J, 1.1);
+
+
+
+		//==========================================
+		//==== the others
+		int temp = 1;
+		markerset.init(K, I, J, temp);
+		N_element = int(markerset.sum());
+		alpha = 1.0;				// NOTE: need to manually set this
 	}
-
-
-
-	//==========================================
-	//==== fill in the dimensions
-	K = Y.get_dimension1();
-	I = Y.get_dimension2();
-	J = Y.get_dimension3();
-	//
-	S = Beta.get_dimension2();
-	D1 = Beta.get_dimension1();
-	//
-	D2 = U2.get_dimension2();
-
-
-	//==========================================
-	//==== the others
-	int temp = 1;
-	markerset.init(K, I, J, temp);
-	N_element = int(markerset.sum());
-	alpha = 1.0;				// NOTE: need to manually set this
 
 
 	return;
@@ -280,33 +395,33 @@ void data_load_real()
 
 	//==== matrix
 	//== U1
-	sprintf(filename, "../data_real/U1.txt");
+	sprintf(filename, "../../data_real/U1.txt");
 	load_matrix(U1, filename);
 	//== V1
-	sprintf(filename, "../data_real/V1.txt");
+	sprintf(filename, "../../data_real/V1.txt");
 	load_matrix(V1, filename);
 	//== T1
-	sprintf(filename, "../data_real/T1.txt");
+	sprintf(filename, "../../data_real/T1.txt");
 	load_matrix(T1, filename);
 	//== U2
-	sprintf(filename, "../data_real/U2.txt");
+	sprintf(filename, "../../data_real/U2.txt");
 	load_matrix(U2, filename);
 	//== V2
-	sprintf(filename, "../data_real/V2.txt");
+	sprintf(filename, "../../data_real/V2.txt");
 	load_matrix(V2, filename);
 	//== T2
-	sprintf(filename, "../data_real/T2.txt");
+	sprintf(filename, "../../data_real/T2.txt");
 	load_matrix(T2, filename);
 	//== Beta
-	sprintf(filename, "../data_real/Beta.txt");
+	sprintf(filename, "../../data_real/Beta.txt");
 	load_matrix(Beta, filename);
 
 	//==== tensor
 	//== Y1
-	sprintf(filename, "../data_real/Y1.txt");
+	sprintf(filename, "../../data_real/Y1.txt");
 	load_tensor(Y1, filename);
 	//== Y2
-	sprintf(filename, "../data_real/Y2.txt");
+	sprintf(filename, "../../data_real/Y2.txt");
 	load_tensor(Y2, filename);
 
 
@@ -320,13 +435,25 @@ void data_load_real()
 	D1 = Beta.get_dimension1();
 	//
 	D2 = U2.get_dimension2();
+	// test
+	cout << "K, I, J, S, D1, D2:" << endl;
+	cout << K << endl;
+	cout << I << endl;
+	cout << J << endl;
+	cout << S << endl;
+	cout << D1 << endl;
+	cout << D2 << endl;
+
 
 
 	//==========================================
 	//==== load data
 	//== X
-	sprintf(filename, "../data_real/X.txt");
+	sprintf(filename, "../../data_real/X.txt");
 	load_matrix(X, filename);
+	cout << "X shape:" << endl;
+	X.print_shape();
+
 
 	// Y (dataset), markerset
 	Y.init(K, I, J);
@@ -339,7 +466,7 @@ void data_load_real()
 	{
 		char filename[100];
 		filename[0] = '\0';
-		strcat(filename, "../data_real/tensor/Tensor_tissue_");
+		strcat(filename, "../../data_real/Tensor_tissue_");
 		char tissue[10];
 		sprintf(tissue, "%d", k);
 		strcat(filename, tissue);

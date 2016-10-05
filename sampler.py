@@ -7,7 +7,7 @@
 
 
 ## several identified issues through simulation test:
-##	1. lamb0 and lamb1 problem, which lambda it is? —> sometimes it’s alpha, note this
+##	1. lamb0 and lamb1 problem, which lambda it is? -> sometimes it is alpha, note this
 ##	2. the real Gibbs sampling (with the right order) for the multi-linear uni-Gaussian
 ##	3. speed up the Beta module (only works for very large matrix, say, Beta, but slower for other smaller factors)
 
@@ -886,6 +886,8 @@ def loglike_cal(mu0, lamb0, alpha0, beta0):							## (global function)
 	loglike_total.append(loglike_cumu)
 	np.save("./result/loglike_total", np.array(loglike_total))
 
+	print "loglike:", loglike_cumu
+
 	return
 
 
@@ -907,6 +909,8 @@ def data_load_simu():
 	Y = np.load("./data_simu/Y.npy")
 
 	##==== load parameters
+	## NOTE: we will init without using the true parameters
+	'''
 	Y1 = np.load("./data_simu/Y1.npy")
 	U1 = np.load("./data_simu/U1.npy")
 	Beta = np.load("./data_simu/Beta.npy")
@@ -917,6 +921,17 @@ def data_load_simu():
 	V2 = np.load("./data_simu/V2.npy")
 	T2 = np.load("./data_simu/T2.npy")
 	alpha = np.load("./data_simu/alpha.npy")[0]
+	'''
+	Y1 = np.load("./data_simu_init/Y1.npy")
+	U1 = np.load("./data_simu_init/U1.npy")
+	Beta = np.load("./data_simu_init/Beta.npy")
+	V1 = np.load("./data_simu_init/V1.npy")
+	T1 = np.load("./data_simu_init/T1.npy")
+	Y2 = np.load("./data_simu_init/Y2.npy")
+	U2 = np.load("./data_simu_init/U2.npy")
+	V2 = np.load("./data_simu_init/V2.npy")
+	T2 = np.load("./data_simu_init/T2.npy")
+	alpha = np.load("./data_simu_init/alpha.npy")[0]
 
 	##==== fill in the dimensions
 	shape = Y.shape
@@ -1016,8 +1031,8 @@ if __name__ == '__main__':
 
 
 
-	#data_load_simu()
-	data_load_real()
+	data_load_simu()
+	#data_load_real()
 
 
 

@@ -1,22 +1,10 @@
-## this is used to init the two factor tensors (with their factor matrices)
-## the general idea is to use the incomplete PCA to init one and the residual to init the other one
-
-
-## this script takes the preprocessed and normalized tensor as input
-## this script will get accompany with incomplete PCA R script
-## this script will be followed by Beta init
-
-
-
-
-
-## initialize the tensor factor matrices
-## targets:
-##	Tissue.npy,				in-directly
-##	Individual.npy,			in-directly
-##	Gene.npy,				directly
 ##
-## and reformat them in .txt
+## we simulate the full tensor, and now we'll make it incomplete, and initialize as we will for the real data
+##
+
+## NOTE: mimic init_1/2/3 for real data
+## NOTE: the format of sample ID: tissueID-individualPos
+
 
 
 
@@ -38,7 +26,7 @@ from sklearn.decomposition import PCA
 import re
 
 
-n_factor = 200			## TODO: tune; TODO: probably set factor_genetics and factor_nongenetics separately
+n_factor = 40			## TODO: tune; TODO: probably set factor_genetics and factor_nongenetics separately
 n_tissue = 0
 n_individual = 0
 n_gene = 0
@@ -50,19 +38,6 @@ dimension = (n_tissue, n_individual, n_gene)
 ##===============
 ##==== sub-routines
 ##===============
-# get the "xxx-yyy" from "xxx-yyy-zzz-aaa-qqq", which is defined as the individual ID of the GTEx samples
-pattern_indiv = re.compile(r'^(\w)+([\-])(\w)+')
-def get_individual_id(s):
-	match = pattern_indiv.match(s)
-	if match:
-		return match.group()
-	else:
-		print "!!! no individual ID is found..."
-		return ""
-
-
-
-
 ## prepare the numpy input data (and init parameters) into txt format such that C++ can use
 """
 The format of the input/output data:
@@ -141,42 +116,40 @@ if __name__ == "__main__":
 
 
 
+
+
 	######## SESSION I -- one factor tensor ########
 	"""
 	print "working on tf1..."
 	##=============
 	##==== loading
 	##=============
-	list_tissue = np.load("./data_prepared/Tissue_list.npy")
-	list_individual = np.load("./data_prepared/Individual_list.npy")
-	list_gene = np.load("./data_prepared/Gene_list.npy")
-	list_sample = np.load("./data_raw/list_sample.npy")
-	Data = np.load("./data_raw/Data.npy")
-	## sample_tissue_rep
-	file = open("./data_raw/phs000424.v6.pht002743.v6.p1.c1.GTEx_Sample_Attributes.GRU.txt_sample_tissue_type", 'r')
-	sample_tissue_rep = {}
-	while 1:
-		line = (file.readline()).strip()
-		if not line:
-			break
-
-		line = line.split('\t')
-		if len(line) < 3:
-			print line
-			continue
-
-		sample = line[0]
-		tissue = line[2]
-		sample_tissue_rep[sample] = tissue
-	file.close()
-
-
-	n_tissue = len(list_tissue)
-	n_individual = len(list_individual)
-	n_gene = len(list_gene)
+	## dimension prepare
+	U1 = np.load("./data_simu_init/U1.npy")
+	V1 = np.load("./data_simu_init/V1.npy")
+	T1 = np.load("./data_simu_init/T1.npy")
+	n_factor = len(U1[0])
+	n_tissue = len(T1)
+	n_individual = len(U1)
+	n_gene = len(V1)
 	dimension = (n_tissue, n_individual, n_gene)
+	print "real tensor shape:",
 	print dimension
 
+
+	## load data
+	list_sample = []
+	Data = []
+	for k in range(n_tissue):
+		list_sample_tissue = np.load("./data_simu_init/Tensor_tissue_" + str(k) + "_list.npy")
+		Data_tissue = np.load("./data_simu_init/Tensor_tissue_" + str(k) + ".npy")
+		for i in range(len(list_sample_tissue)):
+			sample = list_sample_tissue[i]
+			data = Data_tissue[i]
+			list_sample.append(sample)
+			Data.append(data)
+	list_sample = np.array(list_sample)
+	Data = np.array(Data)
 
 
 
@@ -204,29 +177,12 @@ if __name__ == "__main__":
 	print "gene factor matrix:",
 	print len(Y2),
 	print len(Y2[0])
-
-	##==== save PCA results (two matrices, for coefficient matrix and factor matrix; and also the sample_list)
-	#np.save("./data_processed/pca_sample", Y1)
-	#np.save("./data_processed/pca_gene", Y2)
-	#np.save("./data_processed/pca_variance", variance)
-	##print "saving the .npy data done..."
-
-	np.save("./data_init/Gene_tf1", Y2)
-
+	np.save("./data_simu_init/Gene_tf1", Y2)
 
 
 	##=============
 	##==== save the Individual x Tissue matrix (with Nan in) under "./data_inter/"
 	##=============
-	rep_tissue_index = {}
-	for i in range(len(list_tissue)):
-		tissue = list_tissue[i]
-		rep_tissue_index[tissue] = i
-	rep_individual_index = {}
-	for i in range(len(list_individual)):
-		individual = list_individual[i]
-		rep_individual_index[individual] = i
-
 	Data = np.zeros((n_tissue, n_individual, n_factor))
 	for i in range(n_tissue):
 		for j in range(n_individual):
@@ -234,11 +190,12 @@ if __name__ == "__main__":
 				Data[(i,j,k)] = float("Nan")
 	for i in range(len(list_sample)):
 		sample = list_sample[i]
-		tissue = sample_tissue_rep[sample]
-		index_tissue = rep_tissue_index[tissue]
-		individual = get_individual_id(sample)
-		index_individual = rep_individual_index[individual]
-
+		pair = sample.split('-')
+		tissue = pair[0]
+		index_tissue = int(tissue)
+		individual = pair[1]
+		index_individual = int(individual)
+		#
 		Data[index_tissue][index_individual] = Y1[i]
 
 	print "the Tissue x Individual x Factor tensor has the dimension:",
@@ -250,14 +207,14 @@ if __name__ == "__main__":
 		for i in range(n_tissue):
 			for j in range(n_individual):
 				m_factor[i][j] = Data[i][j][k]
-		np.save("./data_inter/f" + str(k) + "_tissue_indiv", m_factor)
+		np.save("./data_simu_inter/f" + str(k) + "_tissue_indiv", m_factor)
 	print "save done..."
 
 
 	##== need to save the results in tsv file (including Nan), in order to load in R
 	for k in range(n_factor):
-		m = np.load("./data_inter/f" + str(k) + "_tissue_indiv.npy")
-		file = open("./data_inter/f" + str(k) + "_tissue_indiv.txt", 'w')
+		m = np.load("./data_simu_inter/f" + str(k) + "_tissue_indiv.npy")
+		file = open("./data_simu_inter/f" + str(k) + "_tissue_indiv.txt", 'w')
 		for i in range(len(m)):
 			for j in range(len(m[i])):
 				value = m[i][j]
@@ -291,7 +248,6 @@ if __name__ == "__main__":
 
 
 
-
 	######## SESSION II ########
 	"""
 	factor_tissue = []
@@ -299,7 +255,7 @@ if __name__ == "__main__":
 	for k in range(n_factor):
 		#
 		factor_tissue.append([])
-		file = open("./data_inter/f" + str(k) + "_tissue.txt", 'r')
+		file = open("./data_simu_inter/f" + str(k) + "_tissue.txt", 'r')
 		while 1:
 			line = (file.readline()).strip()
 			if not line:
@@ -309,7 +265,7 @@ if __name__ == "__main__":
 
 		#
 		factor_indiv.append([])
-		file = open("./data_inter/f" + str(k) + "_indiv.txt", 'r')
+		file = open("./data_simu_inter/f" + str(k) + "_indiv.txt", 'r')
 		while 1:
 			line = (file.readline()).strip()
 			if not line:
@@ -326,18 +282,20 @@ if __name__ == "__main__":
 	print "factor indiv:",
 	print factor_indiv.shape
 
-	np.save("./data_init/Tissue_tf1", factor_tissue)
-	np.save("./data_init/Individual_tf1", factor_indiv)
+	np.save("./data_simu_init/Tissue_tf1", factor_tissue)
+	np.save("./data_simu_init/Individual_tf1", factor_indiv)
 
 
 	##==== save tensor factor
-	fm1 = np.load("./data_init/Tissue_tf1.npy")
-	fm2 = np.load("./data_init/Individual_tf1.npy")
-	fm3 = np.load("./data_init/Gene_tf1.npy")
+	fm1 = np.load("./data_simu_init/Tissue_tf1.npy")
+	fm2 = np.load("./data_simu_init/Individual_tf1.npy")
+	fm3 = np.load("./data_simu_init/Gene_tf1.npy")
 	TF1 = tensor_cal(fm1, fm2, fm3)
-	np.save("./data_init/TF1", TF1)
-	reformat_tensor(TF1, "./data_init/TF1.txt")
+	np.save("./data_simu_init/TF1", TF1)
+	reformat_tensor(TF1, "./data_simu_init/TF1.txt")
 	"""
+
+
 
 
 
@@ -365,54 +323,43 @@ if __name__ == "__main__":
 	## purpose:
 	##	1. get the new Data, which is the residuals of Tensor after tensor factor #1
 	#
-	list_tissue = np.load("./data_prepared/Tissue_list.npy")
-	list_individual = np.load("./data_prepared/Individual_list.npy")
-	list_gene = np.load("./data_prepared/Gene_list.npy")
-	list_sample = np.load("./data_raw/list_sample.npy")
-	Data = np.load("./data_raw/Data.npy")
-	## sample_tissue_rep
-	file = open("./data_raw/phs000424.v6.pht002743.v6.p1.c1.GTEx_Sample_Attributes.GRU.txt_sample_tissue_type", 'r')
-	sample_tissue_rep = {}
-	while 1:
-		line = (file.readline()).strip()
-		if not line:
-			break
-
-		line = line.split('\t')
-		if len(line) < 3:
-			print line
-			continue
-
-		sample = line[0]
-		tissue = line[2]
-		sample_tissue_rep[sample] = tissue
-	file.close()
-	#
-	n_tissue = len(list_tissue)
-	n_individual = len(list_individual)
-	n_gene = len(list_gene)
+	## dimension prepare
+	U1 = np.load("./data_simu_init/U1.npy")
+	V1 = np.load("./data_simu_init/V1.npy")
+	T1 = np.load("./data_simu_init/T1.npy")
+	n_factor = len(U1[0])
+	n_tissue = len(T1)
+	n_individual = len(U1)
+	n_gene = len(V1)
 	dimension = (n_tissue, n_individual, n_gene)
+	print "real tensor shape:",
 	print dimension
 
-	#
-	rep_tissue_index = {}
-	for i in range(len(list_tissue)):
-		tissue = list_tissue[i]
-		rep_tissue_index[tissue] = i
-	rep_individual_index = {}
-	for i in range(len(list_individual)):
-		individual = list_individual[i]
-		rep_individual_index[individual] = i
+	## load data
+	list_sample = []
+	Data = []
+	for k in range(n_tissue):
+		list_sample_tissue = np.load("./data_simu_init/Tensor_tissue_" + str(k) + "_list.npy")
+		Data_tissue = np.load("./data_simu_init/Tensor_tissue_" + str(k) + ".npy")
+		for i in range(len(list_sample_tissue)):
+			sample = list_sample_tissue[i]
+			data = Data_tissue[i]
+			list_sample.append(sample)
+			Data.append(data)
+	list_sample = np.array(list_sample)
+	Data = np.array(Data)
 
-	TF1 = np.load("./data_init/TF1.npy")
+	##
+	TF1 = np.load("./data_simu_init/TF1.npy")
 	TF1_matrix = np.zeros(Data.shape)
 	for i in range(len(list_sample)):
 		sample = list_sample[i]
-		tissue = sample_tissue_rep[sample]
-		index_tissue = rep_tissue_index[tissue]
-		individual = get_individual_id(sample)
-		index_individual = rep_individual_index[individual]
-
+		pair = sample.split('-')
+		tissue = pair[0]
+		index_tissue = int(tissue)
+		individual = pair[1]
+		index_individual = int(individual)
+		#
 		TF1_matrix[i] = TF1[index_tissue][index_individual]
 
 	TF1_matrix = np.array(TF1_matrix)
@@ -452,28 +399,12 @@ if __name__ == "__main__":
 	print "gene factor matrix:",
 	print len(Y2),
 	print len(Y2[0])
-
-	##==== save PCA results (two matrices, for coefficient matrix and factor matrix; and also the sample_list)
-	#np.save("./data_processed/pca_sample", Y1)
-	#np.save("./data_processed/pca_gene", Y2)
-	#np.save("./data_processed/pca_variance", variance)
-	##print "saving the .npy data done..."
-
-	np.save("./data_init/Gene_tf2", Y2)
+	np.save("./data_simu_init/Gene_tf2", Y2)
 
 
 	##=============
 	##==== save the Individual x Tissue matrix (with Nan in) under "./data_inter/"
 	##=============
-	rep_tissue_index = {}
-	for i in range(len(list_tissue)):
-		tissue = list_tissue[i]
-		rep_tissue_index[tissue] = i
-	rep_individual_index = {}
-	for i in range(len(list_individual)):
-		individual = list_individual[i]
-		rep_individual_index[individual] = i
-
 	Data = np.zeros((n_tissue, n_individual, n_factor))
 	for i in range(n_tissue):
 		for j in range(n_individual):
@@ -481,11 +412,12 @@ if __name__ == "__main__":
 				Data[(i,j,k)] = float("Nan")
 	for i in range(len(list_sample)):
 		sample = list_sample[i]
-		tissue = sample_tissue_rep[sample]
-		index_tissue = rep_tissue_index[tissue]
-		individual = get_individual_id(sample)
-		index_individual = rep_individual_index[individual]
-
+		pair = sample.split('-')
+		tissue = pair[0]
+		index_tissue = int(tissue)
+		individual = pair[1]
+		index_individual = int(individual)
+		#
 		Data[index_tissue][index_individual] = Y1[i]
 
 	print "the Tissue x Individual x Factor tensor has the dimension:",
@@ -497,14 +429,14 @@ if __name__ == "__main__":
 		for i in range(n_tissue):
 			for j in range(n_individual):
 				m_factor[i][j] = Data[i][j][k]
-		np.save("./data_inter/f" + str(k) + "_tissue_indiv", m_factor)
+		np.save("./data_simu_inter/f" + str(k) + "_tissue_indiv", m_factor)
 	print "save done..."
 
 
 	##== need to save the results in tsv file (including Nan), in order to load in R
 	for k in range(n_factor):
-		m = np.load("./data_inter/f" + str(k) + "_tissue_indiv.npy")
-		file = open("./data_inter/f" + str(k) + "_tissue_indiv.txt", 'w')
+		m = np.load("./data_simu_inter/f" + str(k) + "_tissue_indiv.npy")
+		file = open("./data_simu_inter/f" + str(k) + "_tissue_indiv.txt", 'w')
 		for i in range(len(m)):
 			for j in range(len(m[i])):
 				value = m[i][j]
@@ -514,6 +446,7 @@ if __name__ == "__main__":
 			file.write('\n')
 		file.close()
 	"""
+
 
 
 
@@ -540,12 +473,13 @@ if __name__ == "__main__":
 
 
 	######## SESSION II ########
+	"""
 	factor_tissue = []
 	factor_indiv = []
 	for k in range(n_factor):
 		#
 		factor_tissue.append([])
-		file = open("./data_inter/f" + str(k) + "_tissue.txt", 'r')
+		file = open("./data_simu_inter/f" + str(k) + "_tissue.txt", 'r')
 		while 1:
 			line = (file.readline()).strip()
 			if not line:
@@ -555,7 +489,7 @@ if __name__ == "__main__":
 
 		#
 		factor_indiv.append([])
-		file = open("./data_inter/f" + str(k) + "_indiv.txt", 'r')
+		file = open("./data_simu_inter/f" + str(k) + "_indiv.txt", 'r')
 		while 1:
 			line = (file.readline()).strip()
 			if not line:
@@ -572,17 +506,25 @@ if __name__ == "__main__":
 	print "factor indiv:",
 	print factor_indiv.shape
 
-	np.save("./data_init/Tissue_tf2", factor_tissue)
-	np.save("./data_init/Individual_tf2", factor_indiv)
+	np.save("./data_simu_init/Tissue_tf2", factor_tissue)
+	np.save("./data_simu_init/Individual_tf2", factor_indiv)
 
 
 	##==== save tensor factor
-	fm1 = np.load("./data_init/Tissue_tf2.npy")
-	fm2 = np.load("./data_init/Individual_tf2.npy")
-	fm3 = np.load("./data_init/Gene_tf2.npy")
+	fm1 = np.load("./data_simu_init/Tissue_tf2.npy")
+	fm2 = np.load("./data_simu_init/Individual_tf2.npy")
+	fm3 = np.load("./data_simu_init/Gene_tf2.npy")
 	TF2 = tensor_cal(fm1, fm2, fm3)
-	np.save("./data_init/TF2", TF2)
-	reformat_tensor(TF2, "./data_init/TF2.txt")
+	np.save("./data_simu_init/TF2", TF2)
+	reformat_tensor(TF2, "./data_simu_init/TF2.txt")
+
+
+
+
+
+
+	print "done (kind of)..."
+	"""
 
 
 
@@ -591,7 +533,55 @@ if __name__ == "__main__":
 
 
 
-	print "done..."
+
+
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	## do the Beta
+	"""
+	# U + X -> Beta: X * Beta_inv = U
+	X = np.load("./data_simu/X.npy")
+	U = np.load("./data_simu_init/Individual_tf1.npy")
+	Beta = np.linalg.lstsq(X, U)[0].T
+	print "Beta shape:", Beta.shape
+	np.save("./data_simu_init/Beta", Beta)
+	"""
+
+
+
+
+
+
+
+
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	##=============/=============/=============/=============/=============/=============/=============/=============
+	## transfrom from .npy to .txt
+	#
+	fm = np.load("./data_simu_init/Tissue_tf1.npy")
+	reformat_matrix(fm, "./data_simu_init/T1.txt")
+	fm = np.load("./data_simu_init/Individual_tf1.npy")
+	reformat_matrix(fm, "./data_simu_init/U1.txt")
+	fm = np.load("./data_simu_init/Gene_tf1.npy")
+	reformat_matrix(fm, "./data_simu_init/V1.txt")
+
+	#
+	fm = np.load("./data_simu_init/Tissue_tf2.npy")
+	reformat_matrix(fm, "./data_simu_init/T2.txt")
+	fm = np.load("./data_simu_init/Individual_tf2.npy")
+	reformat_matrix(fm, "./data_simu_init/U2.txt")
+	fm = np.load("./data_simu_init/Gene_tf2.npy")
+	reformat_matrix(fm, "./data_simu_init/V2.txt")
+
+	#
+	fm = np.load("./data_simu_init/Beta.npy")
+	reformat_matrix(fm, "./data_simu_init/Beta.txt")
+
+
 
 
 

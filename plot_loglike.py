@@ -16,7 +16,7 @@ if __name__=="__main__":
 
 
 	arr = []
-	file = open("./result/loglike_total.txt", 'r')
+	file = open("./result/loglike_total_online.txt", 'r')
 	while 1:
 		line = (file.readline()).strip()
 		if not line:
@@ -51,7 +51,7 @@ if __name__=="__main__":
 
 
 	print arr
-	plt.plot(arr, 'r')
+	plt.plot(arr[1:], 'r')
 
 
 

@@ -44,9 +44,11 @@ if __name__=="__main__":
 	X = []
 	for individual in list_individual:
 		X.append([])
+
+		## TODO: whole genome or chr22
 		for chr_index in range(22):
 			chr = chr_index + 1
-			file = open("../genotype_450_dosage_matrix_qc/chr" + str(chr) + "/SNP_dosage_" + individual + ".txt", 'r')
+			file = open("../genotype_450_dosage_matrix_qc_trim/chr" + str(chr) + "/SNP_dosage_" + individual + ".txt", 'r')
 			while 1:
 				line = (file.readline()).strip()
 				if not line:
@@ -54,6 +56,18 @@ if __name__=="__main__":
 
 				X[-1].append(float(line))
 			file.close()
+		"""
+		chr = 22
+		file = open("../genotype_450_dosage_matrix_qc/chr" + str(chr) + "/SNP_dosage_" + individual + ".txt", 'r')
+		while 1:
+			line = (file.readline()).strip()
+			if not line:
+				break
+
+			X[-1].append(float(line))
+		file.close()
+		"""
+
 	X = np.array(X)
 	print "X (dosage) shape:", X.shape
 
@@ -83,7 +97,6 @@ if __name__=="__main__":
 	print "Beta shape:", Beta.shape
 
 	np.save("./data_init/Beta", Beta)
-
 
 
 

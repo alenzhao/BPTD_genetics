@@ -1,10 +1,10 @@
 ## do incomplete PCA for each element of the (factor x Tissue x Individual) tensor
-## dir: "./data_inter/" (cluster) and "./data_temp/" (local)
+## dir: "./data_inter/" or "./data_simu_inter/" (cluster) and "./data_temp/" (local)
 ## remove all local data afterwards
 
 
 library(pcaMethods)
-n_factor <- 400  # TODO
+n_factor <- 40  # TODO
 for (k in 0:(n_factor-1)){
   print(paste("Working on factor #", k))
   data = read.table(paste("./data_temp/f", toString(k), "_tissue_indiv.txt", sep=""))

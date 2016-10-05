@@ -53,25 +53,26 @@ def reformat_tensor(tensor, filename):
 
 
 
+
 if __name__=="__main__":
 
 
 
 	#
 	fm = np.load("./data_init/Tissue_tf1.npy")
-	reformat_matrix(fm, "./data_init/Tissue_tf1.txt")
+	reformat_matrix(fm, "./data_init/T1.txt")
 	fm = np.load("./data_init/Individual_tf1.npy")
-	reformat_matrix(fm, "./data_init/Individual_tf1.txt")
+	reformat_matrix(fm, "./data_init/U1.txt")
 	fm = np.load("./data_init/Gene_tf1.npy")
-	reformat_matrix(fm, "./data_init/Gene_tf1.txt")
+	reformat_matrix(fm, "./data_init/V1.txt")
 
 	#
 	fm = np.load("./data_init/Tissue_tf2.npy")
-	reformat_matrix(fm, "./data_init/Tissue_tf2.txt")
+	reformat_matrix(fm, "./data_init/T2.txt")
 	fm = np.load("./data_init/Individual_tf2.npy")
-	reformat_matrix(fm, "./data_init/Individual_tf2.txt")
+	reformat_matrix(fm, "./data_init/U2.txt")
 	fm = np.load("./data_init/Gene_tf2.npy")
-	reformat_matrix(fm, "./data_init/Gene_tf2.txt")
+	reformat_matrix(fm, "./data_init/V2.txt")
 
 	#
 	fm = np.load("./data_init/Beta.npy")
